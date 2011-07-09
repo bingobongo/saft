@@ -1,0 +1,44 @@
+# robots.txt for http://domain.tld/
+
+Sitemap: http://domain.tld/sitemap/
+
+User-agent: Anawave
+User-agent: EmailCollector
+User-agent: EmailSiphon
+User-agent: ExtractorPro
+User-agent: FlashSite
+User-agent: Go-Get-It
+User-agent: Grab-a-Site
+User-agent: HotCargo
+User-agent: HttpLoader
+User-agent: MemoWeb
+User-agent: NearSite
+User-agent: NetAttache
+User-agent: Radview
+User-agent: Radview/HttpLoader
+User-agent: SearchEngineSpider
+User-agent: Second Site
+User-agent: SecondSite
+User-agent: SiteSnagger
+User-agent: SpidyBot
+User-agent: Teleport
+User-agent: Teleport Pro
+User-agent: Visual Web
+User-agent: VisualWeb
+User-agent: WBI_Client
+User-agent: WebCompass
+User-agent: WebCopier
+User-agent: WebCopy
+User-agent: WebDownloader
+User-agent: WebRetriever
+User-agent: WebSnake
+User-agent: WebVCR
+User-agent: WebWhacker
+User-agent: WebZIP
+User-agent: Wget
+User-agent: Googlebot-Image
+User-agent: MSNBot-Media
+User-agent: Yahoo-MMCrawler
+User-agent: vscooter
+User-agent: psbot
+Disallow: /

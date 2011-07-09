@@ -1,0 +1,232 @@
+#
+# .htaccess
+# ---------
+#
+# Sections marked with
+#
+#    # # #
+#        # …
+#        #
+#
+# probably need to be configured –
+# the rest just maybe :)
+#
+#
+# Set proper file permissions on all items,
+# be it directories or files; e.g. on a
+#
+# a) Joyent SmartMachine:
+#    ====================
+#
+#    Directories:
+#
+#    - “/app” + subdirectories to “0710”
+#      [or to “0770” if Saft or Maat should be writing
+#       anything in there; they don’t by default]
+#    - “/asset”, “/pot” + subdirectories to “0775”
+#    - “/cache” + subdirectories to “0770”
+#      [if Maat: “/log”, “/tmp” + subdirectories to “0770”]
+#
+#    Files:
+#
+#    - “/.htaccess” to “0640”
+#    - all files inside “/app”, “/index.php” to “0640”
+#    - all other files to “0644”;
+#      [if Maat: set them to “0664” instead]
+#      they’re mainly found inside the root directory
+#      and inside subdirectories of “/asset”, “/pot”.
+#
+#
+# b) Joyent Shared SmartMachine:
+#    ===========================
+#
+#    Directories:
+#
+#    - “/app” + subdirectories to “0700”
+#    - “/asset”, “/pot” + subdirectories to “0755”
+#    - “/cache” + subdirectories to “0700”
+#      [if Maat: “/log”, “/tmp” + subdirectories to “0700”]
+#
+#    Files:
+#
+#    - “/.htaccess” to “0640”
+#    - all files inside “/app”, “/index.php” to “0600”
+#    - all other files to “0644”;
+#      they’re mainly found inside the root directory
+#      and inside subdirectories of “/asset”, “/pot”.
+#
+#
+# Related to permissions/owners in a Joyent shared
+# versus a non-shared environment:
+#
+#    Filip Hajny, 2010-09-17: “On shared, we’re using a suexec setup
+#        where scripts execute as particular users, coupled with a
+#        mod_fcgid based setup. While that gives a much better security
+#        control over access, it’s not as performant/scalable as a more
+#        traditional mod_php based setup (where everything runs as ‘www‘).
+#        Neither is perfect, but mod_fcgid/suexec is tricky and
+#        prone to configuration errors/problems, which can be avoided
+#        on a shared system where we hold the keys.”
+#
+#    Therefore, add group “www” to the SFTP user’s secondary groups and vice
+#        versa to allow it managing directories and files via SFTP that
+#        “www” has created (e.g. log in to Webmin: navigate to “Webmin” –
+#            “System” – “Users and Groups” – “username”. There add under
+#            “Group Membership” “www” to “Secondary groups”. That will allow
+#            “username” to delete items via SFTP that “www” is the owner of –
+#            e.g. cache files – so this application may neglect to add extra 
+#            group write permisson to temporary files, which it happily does :)
+#
+#
+# Finish setup by disabling debug mode and enabling the built-in caching.
+#
+
+
+AddDefaultCharset utf-8
+Options +FollowSymLinks
+
+
+#
+# Serve proper image, video, webfont, xsl, manifest MIME types
+#
+
+AddType image/webp               .webp
+AddType video/ogg                .ogg .ogv
+AddType video/webm               .webm
+AddType application/x-font-woff  .woff
+AddType application/xslt+xml     .xsl
+AddType text/cache-manifest      .appcache .manifest
+
+
+<IfModule mod_rewrite.c>
+
+	RewriteEngine on
+
+
+	#
+	# Sometimes Rewrites cause infinite loops, stop it.
+	#
+
+	RewriteCond %{ENV:REDIRECT_STATUS} 200
+	RewriteRule .* - [L]
+
+
+# # #
+	# Define Rewrite base of the per-directory context
+	#    (= absolute path to where this app is installed in;
+	#       i.e. “/” for “http://example.tld/” or
+	#        “/dir/” for “http://example.tld/dir/”)
+	#
+
+	SetEnvIfNoCase rw_base "^$" rw_base=/saft/
+	RewriteBase /saft/
+
+
+# # #
+	# Prevent pranksters from hotlinking application or entry assets.
+	#    Alien hosts won’t be allowed to display application assets;
+	#    therefore, define the host(s) where this application
+	#    and possibly akin apps are living in. Also allow clients
+	#    that do not send Referer info.
+	#
+
+	SetEnvIfNoCase Referer "^https?://localhost:8888/.*" akin_app
+	SetEnvIfNoCase Referer "^$" akin_app
+
+	#    Instead, FilesMatch-Allow-Deny-Combo would retard bit.
+	RewriteCond %{ENV:akin_app} ^$
+	RewriteRule \.(?:css|gif|ico|jp(e|g|eg)|js|ogg|ogv|pdf|png|svg|txt|text|webm|webp|woff|xsl|zip)$ - [F,NC,L]
+
+
+	#
+	# Force no “www.”
+	#
+
+	RewriteCond %{HTTP_HOST} ^www\.([a-z-\.]+(?::\d+)?) [NC]
+	RewriteRule .* http://%1%{REQUEST_URI} [R=301,L]
+
+
+	#
+	# Rewrite e.g. “/asset.0123456789/…” to “/asset/…”
+	#    This allows the updating of asset files in the
+	#    client cache by just renaming them in html without
+	#    renaming any real files in specified directory.
+	#
+
+	RewriteRule ^asset\.[0-9]+/(.*) asset/$1 [NC,L]
+
+
+	#
+	# Redirect e.g. “/pot/author…” to “/author…” –
+	#    forces a semantically URL; usually shouldn’t be necessary at all.
+	#
+
+	RewriteRule ^pot/(.*) $1 [R,NC,L]
+
+
+	#
+	# Force proper sitemap and feed URL.
+	#    This will cut everything off behind e.g.
+	#    “/author/atom/” or “/atom/”, but nothing more.
+	#    This doesn’t even handle “author/name/atom/” nor further!
+	#
+
+	RewriteRule ^(sitemap|(?:[\w-]+/)?atom)(?:/.+) $1/ [R,NC,L]
+
+
+	#
+	# Add a trailing slash to real directories.
+	#    Without it’d redirect automatically with the drawback of an
+	#    accidentelly visible query string due to the final rewrite rules.
+	#
+
+	RewriteCond %{REQUEST_URI} !.*/$
+	RewriteCond %{REQUEST_FILENAME} -d
+	RewriteRule (.*) $1/ [R,L]
+
+
+	#
+	# Undo semantically URLs for presumptive files
+	#    in content pot, but only internally;
+	#    rewrite e.g “/author…” to “/pot/author…”.
+	#    This matches URIs that end with a dot file extension only!
+	#    Stop then.
+	#
+	#    Always exclude the uber-pot “pot/” in links
+	#    and sources: unwanted URI, rewritten internally.
+	#
+
+	RewriteCond %{REQUEST_URI} /\d{8}\s[\w-]+(?:\s\d+)?\.[a-z]{2,4}$ [NC]
+	RewriteRule (.*) pot/$1 [NC,L]
+
+
+# # #
+	# Bypass PHP when applicable, use funky caching instead –
+	#    currently only usable for permalinks; Saft only, not Maat.
+	#
+
+#	SetEnvIfNoCase Request_URI "/(?:json)/?$" cache_ext=.json
+#	SetEnvIfNoCase cache_ext "^$" cache_ext=.html
+#	RewriteCond %{REQUEST_URI} ^.*/(\w+)/(\d{4})/(\d{2})/(\d{2})/([\w-]+)(?:/?|/(json)/?)$ [NC]
+#	RewriteCond %{DOCUMENT_ROOT}%{ENV:rw_base}pot/%1/0_REMOVE-TO-FORCE-CACHE-UPDATE.txt -f
+#	RewriteCond %{DOCUMENT_ROOT}%{ENV:rw_base}cache/saft/%1/%2%3%4\ %5%{ENV:cache_ext} -f
+#	RewriteRule .* cache/saft/%1/%2%3%4\ %5%{ENV:cache_ext} [NC,L]
+
+
+	#
+	# Rewrite any other access to the main page, add “rw” parameter
+	#    for enabled mod_rewrite check and for params; except it’s a file;
+	#    but not app, cache nor log data files.
+	#
+
+	RewriteRule ^(?:app|log|cache)/.* index.php?rw=%{REQUEST_URI} [L,QSA]
+
+	RewriteCond %{REQUEST_FILENAME} !-f
+	RewriteCond %{REQUEST_URI} !.*/$
+	RewriteRule .* index.php?rw=%{REQUEST_URI}/ [L,QSA]
+
+	RewriteCond %{REQUEST_FILENAME} !-f
+	RewriteRule .* index.php?rw=%{REQUEST_URI} [L,QSA]
+
+
+</IfModule>

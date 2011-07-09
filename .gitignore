@@ -1,0 +1,10 @@
+# Maat, cache, log, content pots #
+##################################
+/app/maat/*
+/asset/maat/*
+/cache/
+/log/
+/pot/*
+!/pot/.*
+/tmp/
+/todo.txt
