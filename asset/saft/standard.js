@@ -3,7 +3,7 @@
 // @return	number
 
 String.prototype.startsWith = function(str){
-	return this.indexOf(str) === 0;						// “.indexOf()” is case sensitive
+	return this.indexOf(str) === 0;			// .indexOf() is case sensitive
 };
 
 
@@ -13,7 +13,7 @@ var	keyboard = function(e){
 		return null;
 	}
 
-	switch (e.keyCode){				// keycode table, http://unixpapa.com/js/key.html
+	switch (e.keyCode){	// keycode table, http://unixpapa.com/js/key.html
 		case 0:
 		case 16:
 		case 17:
@@ -23,45 +23,45 @@ var	keyboard = function(e){
 		case 93:
 		case 219:
 		case 220:
-		case 224:
-			keyboardCache = e.keyCode;					// command, branded keys
-			window.setTimeout('keyboardCache = null', 400);	// being lazy with “setTimeout”,
-			break;											// but accurate in many cases
-		case 27:										// esc
+		case 224:							// command, branded keys
+			keyboardCache = e.keyCode;			// being lazy with setTimeout,
+			window.setTimeout('keyboardCache = null', 400);
+			break;								// but accurate in many cases
+		case 27:							// esc
 
-			if (app.entries){								// reset cached focus
+			if (app.entries){					// reset cached focus
 				app.entries.lastly = null;
 			}
 
 			document.activeElement.blur();
 			break;
-		case 65:										// a
+		case 65:							// a
 			redirect(document.getElementById('pots'));
 			break;
-		case 72:										// h
+		case 72:							// h
 			redirect(document.getElementById('prev'));
 			break;
-		case 73:										// i
+		case 73:							// i
 			redirect(document.getElementById('home'));
 			break;
-		case 74:										// j
+		case 74:							// j
 
 			if (app.pageType === 'index'){
 				shiftFocus(1);
 			}
 
 			break;
-		case 75:										// k
+		case 75:							// k
 
 			if (app.pageType === 'index'){
 				shiftFocus(-1);
 			}
 
 			break;
-		case 76:										// l
+		case 76:							// l
 			redirect(document.getElementById('next'));
 			break;
-		case 79:										// o
+		case 79:							// o
 			redirect(document.activeElement);
 			break;
 	}
@@ -75,7 +75,7 @@ var	keyboard = function(e){
 
 var redirect = function(el){
 
-	if (el === 1){										// = “open (o)” link
+	if (el === 1){							// = "open (o)" link
 
 		if (app.entries.lastly === null){
 			return null
@@ -124,7 +124,7 @@ var shiftFocus = function(n, click){
 			|	(	click
 				&&	app.entries.time < new Date().getTime()
 				)
-	){													// re-focus on cached focus
+	){										// re-focus on cached focus
 		current = current;
 
 	} else if (current === 0){
@@ -201,7 +201,7 @@ var flimflam = function(page, total, path){
 
 		if (i === page){
 			span = document.createElement('span');
-			span.innerHTML = i;							// html: &nbsp; or &#160; unicode: \U00A0
+			span.innerHTML = i;				// html: &nbsp; or &#160; unicode: \U00A0
 			f.appendChild(span);
 			f.appendChild(document.createTextNode(' '));
 

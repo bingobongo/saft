@@ -9,8 +9,8 @@ Class Html extends Archive {
 		parent::__construct();
 	}
 
-
-	protected function __build(&$entries, $lastmod){	# $lastmod is superfluous for archive
+											# $lastmod superfluous for archive
+	protected function __build(&$entries, $lastmod){
 		echo '<!doctype html>
 <html dir=ltr lang=' , App::LANG , ' id=' , Elf::getDomainID() , '>
 <head>
@@ -47,7 +47,7 @@ Class Html extends Archive {
 			$size = sizeof($entries) + 1;
 			$r = 0;
 
-			while (--$size){							# uber, content pots
+			while (--$size){				# uber, content pots
 				++$r;
 
 				if ($r !== 1){
@@ -62,15 +62,15 @@ Class Html extends Archive {
 					$name = '<a href=' . $baseURI . '>↩</a>';
 				}
 
-				$a = array_shift($arr);					# season alone (without year), remove from array
-				$q = 0;
+				$a = array_shift($arr);		# season alone (without year),
+				$q = 0;						#    remove from array
 				echo '
 				<tr>
 					<td>
 						' , ucfirst($name) , '
 					<td>';
 
-				foreach ($a as $seasonArr){				# season alone (without year)
+				foreach ($a as $seasonArr){	# season alone (without year)
 					echo '
 					<td>';
 
@@ -78,14 +78,14 @@ Class Html extends Archive {
 						echo '
 						<a href=' , $baseURI , $seasonStr[$q][0] , '>' , $seasonStr[$q][1] , '</a>';
 
-					else if ($r === 1)					# first of all (uber-season)
+					else if ($r === 1)		# first of all (uber-season)
 						echo '
 						' , $seasonStr[$q][1];
 
 					++$q;
 				}
-
-				foreach (array_keys($arr) as $year){	# year
+											# year
+				foreach (array_keys($arr) as $year){
 					$a = $arr[$year];
 					$q = 0;
 					$year = trim($year);
@@ -95,8 +95,8 @@ Class Html extends Archive {
 					<td>
 					<td>
 						<a href=' , $baseURI , $year , '/>' , $year , '</a>';
-
-					foreach ($a as $seasonArr){			# season
+											# season
+					foreach ($a as $seasonArr){
 						echo '
 					<td>';
 

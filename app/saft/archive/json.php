@@ -10,7 +10,7 @@ Class JSON extends Archive {
 	}
 
 
-	protected function __build(&$entries, $lastmod){	# $lastmod is superfluous for archive
+	protected function __build(&$entries, $lastmod){
 		echo '{
 	"title": "' , Elf::escapeJSONStr(htmlspecialchars(App::TITLE, ENT_QUOTES, 'utf-8', false) . ' ' . ucfirst(strtolower(App::ARCHIVE_STR))) , '",
 	"url": "' , App::$baseURL , str_replace('json', '', App::$rw) , '",
@@ -30,7 +30,7 @@ Class JSON extends Archive {
 			$size = sizeof($entries) + 1;
 			$r = 0;
 
-			while (--$size){							# uber, content pots
+			while (--$size){				# uber, content pots
 				++$r;
 
 				if ($r !== 1){
@@ -44,11 +44,11 @@ Class JSON extends Archive {
 					$name = '↩';
 				}
 
-				if ($arr === 0)							# abandone
+				if ($arr === 0)				# abandone
 					continue;
 
-				$a = array_shift($arr);					# season alone (without year), remove from array
-				$q = 0;
+				$a = array_shift($arr);		# season alone (without year),
+				$q = 0;						#    remove from array
 				$sizeArr = sizeof($arr);
 				echo '
 		{
@@ -60,7 +60,7 @@ Class JSON extends Archive {
 					"url": "",
 					"season": [';
 
-				foreach ($a as $seasonArr){				# season alone (without year)
+				foreach ($a as $seasonArr){	# season alone (without year)
 					echo '
 						{
 							"name": "' , $seasonStr[$q][1] , '",
@@ -73,8 +73,8 @@ Class JSON extends Archive {
 				echo '
 					]
 				}' , $sizeArr > 0 ? ',' : '';
-
-				foreach (array_keys($arr) as $year){	# year
+											# year
+				foreach (array_keys($arr) as $year){
 					$a = $arr[$year];
 					$q = 0;
 					$year = trim($year);
@@ -85,8 +85,8 @@ Class JSON extends Archive {
 					"name": "' , $year , '",
 					"url": "' , $baseURL , $year , '/",
 					"season": [';
-
-					foreach ($a as $seasonArr){			# season
+											# season
+					foreach ($a as $seasonArr){
 						echo '
 						{
 							"name": "' , $seasonStr[$q][1] , '",

@@ -29,9 +29,12 @@ Class JSON extends Index {
 	"rights": "(C) 2010-' , date('Y ') , str_replace('www.', '', $_SERVER['HTTP_HOST']) , '/",
 	"entries": [';
 
+		# bit lower memory peak than "foreach (array_keys() as $path){"
+		#    (gains with array size)
+
 		if (empty($entries) === false){
-			$size = sizeof($entries) + 1;				# bit lower memory peak (gains with array size) than
-			$r = 0;										#    “foreach (array_keys($entries) as $entryPath){” attempt
+			$size = sizeof($entries) + 1;
+			$r = 0;
 
 			while (--$size){
 				++$r;

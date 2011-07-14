@@ -73,7 +73,7 @@ class Markdown_Parser {
 
 		$this->nested_url_parenthesis_re = 
 			str_repeat('(?>[^()(?!\'")]+|\(', $this->nested_url_parenthesis_depth).
-// ** GFM ** Changed '…[^()\s]…' to '…[^()(?!\'")]…' to allow spaces in URLs
+// ** GFM ** Changed '..[^()\s]..' to '..[^()(?!\'")]..' to allow spaces in URLs
 
 			str_repeat('(?>\)))*', $this->nested_url_parenthesis_depth);
 

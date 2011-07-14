@@ -6,10 +6,10 @@ namespace Saft;
 Class Archive {
 
 	private static $seasonPattern = array(
-		'0[1-3]*',										# spring
-		'0[4-6]*',										# summer
-		'0[7-9]*',										# autumn
-		'1[0-2]*'										# winter
+		'0[1-3]*',							# spring
+		'0[4-6]*',							# summer
+		'0[7-9]*',							# autumn
+		'1[0-2]*'							# winter
 	);
 
 
@@ -21,26 +21,34 @@ Class Archive {
 	protected function __archive(){
 		Pilot::getContentType($contentType, $cachename);
 		Pilot::$path = App::$potRoot;
-														# i.a. checks for outdated entry list cache,
-		$entries = Pilot::scan();						#    “etagExpired” check depends on that
 
-		if (App::CACHE === 1){							# … cache path of entry list for hash creation and to verify cache relevance
+		# i.a. checks for outdated list cache, etagExpired check depends on that
+		$entries = Pilot::scan();
+
+		if (App::CACHE === 1){
+
+			# $arrCache = cache path of entry list,
+			#    for hash creation and to verify cache relevance
+
 			$arrCache = App::$cacheRoot . '/' . App::ARR_CACHE_SUFFIX;
 			Elf::etagExpired($arrCache);
-			Elf::sendStandardHeader($contentType);		# “App::ARCHIVE_STR” (not “Pilot::$pageType”, won’t comply with URI)
+			Elf::sendStandardHeader($contentType);
 			$cachename = App::ARCHIVE_STR . '.' . $cachename;
+			# App::ARCHIVE_STR, because cache name must comply with URI
 
-														# cache exists, up-to-date and ready for output
+			# cache exists, up-to-date, ready for output
+
 			if (Elf::cached($arrCache, $cachename) === 1)
 				include(App::$cacheRoot . '/' . $cachename);
 
 			else {
-				ob_start();								# start output buffering
+				ob_start();					# start output buffering
 
-				$this->__prepare($entries, $arrCache);	# $arrCache used for and becomes $lastmod
+				# $arrCache used for and becomes $lastmod by reference
+				$this->__prepare($entries, $arrCache);
 				$this->__build($entries, $arrCache);
 				Elf::writeToFile(App::$cacheRoot . '/' . $cachename, ob_get_contents(), 'wb');
-				ob_end_flush();							# stop output buffering
+				ob_end_flush();				# stop output buffering
 			}
 
 		} else {
@@ -67,18 +75,22 @@ Class Archive {
 
 	protected function __prepare(&$entries, &$lastmod){
 
-		if (empty($entries) === false){
-			$lastmod = empty($lastmod) === false		# bit faster than “App::CACHE === 1”
+		if (empty($entries) === false){		# bit faster than App::CACHE === 1
+			$lastmod = empty($lastmod) === false
 				? filemtime($lastmod)
-				: filemtime(key($entries));				# “key(…)” = latest entry by name only, may be inaccurate in some cases
-
+				: filemtime(key($entries));	# key() = latest entry by name only,
+											#    may be inaccurate in some cases
 			$this->__getPrepared($entries);
 
 			if (App::POT_FILTER === 1){
 
 				foreach (App::$pots as $path){
-					Pilot::$path = $path;				# change path to comply with the assumption of base of “cache()”
-					$contentPotEntries = Pilot::scan();	#    function and the URIs of content pots in Pot class
+
+					# change path to comply with the assumption of base
+					#    of cache() and URI of content pot in class Pot
+
+					Pilot::$path = $path;
+					$contentPotEntries = Pilot::scan();
 
 					if (empty($contentPotEntries) === false){
 						$this->__getPrepared($contentPotEntries);
@@ -112,9 +124,9 @@ Class Archive {
 		$str = implode('-', array_flip(array_flip($entries)));
 		$entries = array();
 
-		foreach (self::$seasonPattern as $pattern){		# YYYY
+		foreach (self::$seasonPattern as $pattern){
 			$pattern = '*[1-2][0-9][0-9][0-9]' . $pattern;
-
+											# YYYY
 			if (fnmatch($pattern, $str) === true)
 				$entries[0][0][] = 1;
 			else
@@ -130,14 +142,14 @@ Class Archive {
 				$pattern = '*' . strval($till) . $pattern;
 
 				if (fnmatch($pattern, $str) === true){
-					$entries[0][$till . ' '][] = 1;		# “' '” lets keep keys after “array_shift”
-					$null = 1;
+					$entries[0][$till . ' '][] = 1;
+					$null = 1;				# ' ' keeps keys after array_shift
 
 				} else
 					$entries[0][$till . ' '][] = 0;
 			}
 
-			if ($null === 0)							# omit years without activity
+			if ($null === 0)				# omit years without activity
 				unset($entries[0][$till . ' ']);
 		}
 

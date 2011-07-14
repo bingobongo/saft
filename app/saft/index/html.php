@@ -9,8 +9,8 @@ Class Html extends Index {
 		parent::__construct();
 	}
 
-
-	protected function __build(&$entries, $lastmod){	# $lastmod is superfluous for indexes
+											# $lastmod superfluous for indexes
+	protected function __build(&$entries, $lastmod){
 		$alternate = '';
 
 		if (Pilot::$contentPot !== 0){
@@ -46,9 +46,12 @@ Class Html extends Index {
 <body class=index data-mod=' , $lastmod , '>
 	<section id=index' , Pilot::$page === 1 ? ' class=first' : '' , '>';
 
+		# bit lower memory peak than "foreach (array_keys() as $path){"
+		#    (gains with array size)
+
 		if (empty($entries) === false){
-			$size = sizeof($entries);					# bit lower memory peak (gains with array size) than
-			$r = 0;										#    “foreach (array_keys($entries) as $entryPath){” attempt
+			$size = sizeof($entries);
+			$r = 0;
 
 			if ($size > 0)
 				++$size;

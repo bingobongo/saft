@@ -5,13 +5,14 @@ namespace Saft;
 
 Class Nav {
 
-	const ADJACENT = 10;								# adjacent left/right to current page
+	const ADJACENT = 10;					# adjacent LR to current page
 
-	public static $archiveStr,
-				  $indexStr,
-				  $prevStr,
-				  $nextStr,
-				  $paginatePath;
+	public static
+		$archiveStr,
+		$indexStr,
+		$prevStr,
+		$nextStr,
+		$paginatePath;
 
 
 	# @param	string
@@ -19,10 +20,11 @@ Class Nav {
 	# @param	string
 	# @param	string
 
-	public function __construct($indexStr = 'index&nbsp;(<span>i</span>)',
-								$prevStr = '«(<span>h</span>)&nbsp;prev',
-								$nextStr = 'next&nbsp;(<span>l</span>)»',
-								$archiveStr = 'archive&nbsp;(<span>a</span>)'
+	public function __construct(
+		$indexStr = 'index&nbsp;(<span>i</span>)',
+		$prevStr = '«(<span>h</span>)&nbsp;prev',
+		$nextStr = 'next&nbsp;(<span>l</span>)»',
+		$archiveStr = 'archive&nbsp;(<span>a</span>)'
 	){
 		if (Pilot::$protocol !== 'html')
 			return null;
@@ -44,7 +46,7 @@ Class Nav {
 			echo '
 	<p id=okj>
 		<a tabIndex=-1 href=javascript:void(redirect(1))>open (<span>o</span>)</a><span> </span><a tabIndex=-1 href=javascript:void(shiftFocus(-1,1))>prev (<span>k</span>)</a><span> </span><a tabIndex=-1 href=javascript:void(shiftFocus(1,1))>next (<span>j</span>)</a>
-	</p>';												# without </p> Opera 11 would mess up
+	</p>';									# no </p>, Opera 11 would mess up
 
 		if (	App::PREV_NEXT === 1
 			&&	$prev !== 0
@@ -65,8 +67,8 @@ Class Nav {
 			$str.= '<a tabIndex=-1 id=home' . ' href=' . App::$absolute . ' rel=index>' . self::$indexStr . '</a><span> </span>';
 
 		if (	App::ARCHIVE === 1
-			&&	$class !== 'archive'					# not “App::ARCHIVE_STR”, won’t comply with filename of class to load
-		)
+			&&	$class !== 'archive'		# because App::ARCHIVE_STR must not
+		)									#    comply with page-type name
 			$str.= '<a tabIndex=-1 id=pots' . ' href=' . App::$absolute . rawurlencode(App::ARCHIVE_STR) . '/ rel=archives>' . self::$archiveStr . '</a><span> </span>';
 
 		if (	App::PREV_NEXT === 1
@@ -74,7 +76,7 @@ Class Nav {
 		)
 			$str.= '<a tabIndex=-1 id=next href=' . $next . ' rel=next>' . self::$nextStr . '</a><span> </span>';
 
-		if ($str !== '')								# cut off last “<span> </span>”
+		if ($str !== '')					# cut off last "<span> </span>"
 			echo '
 	<nav>
 		' , substr($str, 0, -14) , '
@@ -96,12 +98,19 @@ Class Nav {
 					$next = 0;
 
 		if (Pilot::$pageType === 'permalink'){
-			$key = Pilot::$path;						# must come before “Pot::scan()” that changes “Pilot::$path” again
 
-			Pilot::$path = App::$potRoot;				# change again to comply with the assumption of base of
-														#    “cache()” function and the URIs of content pots in class Pot
+			# must come before Pot::scan() that changes Pilot::$path again
 
-		#	Pilot::$path = App::POT_FILTER === 1		# ’d make prev/next entry navigate to ones of same content pot only …
+			$key = Pilot::$path;
+
+			# change again to comply with the assumption of the base of
+			#    cache() function and the URI of content pot in class Pot
+
+			Pilot::$path = App::$potRoot;
+
+			# makes prev/next entry navigate to ones of same content pot only
+
+		#	Pilot::$path = App::POT_FILTER === 1
 		#		? App::$potRoot . '/' . Pilot::$contentPot
 		#		: App::$potRoot;
 
@@ -120,11 +129,11 @@ Class Nav {
 			if ($next = next($entries))
 				$next = key($entries);
 
-			$prev = $prev !== false						# previous entry
+			$prev = $prev !== false			# previous entry
 				? '/' . Elf::entryPathToURLi($prev, true)
 				: 0;
 
-			$next = $next !== false						# next entry
+			$next = $next !== false			# next entry
 				? '/' . Elf::entryPathToURLi($next, true)
 				: 0;
 
@@ -143,11 +152,11 @@ Class Nav {
 			$page = Pilot::$page;
 			$this->__getPaginatePath($path);
 
-			$prev = $page > 1							# previous page
+			$prev = $page > 1				# previous page
 				? $path . ($page - 1) . '/'
 				: 0;
 
-			$next = $size > $perPage * $page			# next page
+			$next = $size > $perPage*$page	# next page
 				? $path . ($page + 1) . '/'
 				: 0;
 
@@ -173,7 +182,7 @@ Class Nav {
 	<p id=paginate>
 		';
 
-		if ($pages < self::ADJACENT * 2 + 2){			# few only
+		if ($pages < self::ADJACENT*2 + 2){	# few only
 
 			for ($i = $pages + 1; --$i;){
 
@@ -186,10 +195,10 @@ Class Nav {
 				++$p;
 			}
 
-		} else {										# hide part
+		} else {							# hide part
 
-			if ($page < self::ADJACENT + 2){				# close to start
-				$i = self::ADJACENT * 2 + 2;
+			if ($page < self::ADJACENT + 2){	# close to start
+				$i = self::ADJACENT*2 + 2;
 
 				while (--$i){
 
@@ -207,8 +216,8 @@ Class Nav {
 			} else if (
 					$page < $pages - self::ADJACENT
 				&&	$page > self::ADJACENT + 1
-			){												# in the middle of
-				$i = self::ADJACENT * 2 + 2;
+			){									# in the middle of
+				$i = self::ADJACENT*2 + 2;
 				$p = $page - self::ADJACENT;
 				echo '<a href="javascript:void(flimflam(' , $page , ', ' , $pages , ', \'' , $path , '\'));">&hellip;</a> ';
 
@@ -225,8 +234,8 @@ Class Nav {
 
 				echo '<a href="javascript:void(flimflam(' , $page , ', ' , $pages , ', \'' , $path , '\'));">&hellip;</a>';
 
-			} else {										# close to end
-				$p = $pages - self::ADJACENT * 2;
+			} else {							# close to end
+				$p = $pages - self::ADJACENT*2;
 				$i = $pages - $p + 2;
 				echo '<a href="javascript:void(flimflam(' , $page , ', ' , $pages , ', \'' , $path , '\'));">&hellip;</a> ';
 

@@ -5,13 +5,14 @@ namespace Saft;
 
 Class Pilot extends Pot {
 
-	public static $contentPot = 0,
-				  $month = 0,
-				  $page = 0,							# for paginate
-				  $pageType = 0,
-				  $protocol = 0,
-				  $size = 0,							# for paginate
-				  $year = 0;
+	public static
+		$contentPot = 0,
+		$month = 0,
+		$page = 0,							# for paginate
+		$pageType = 0,
+		$protocol = 0,
+		$size = 0,							# for paginate
+		$year = 0;
 
 
 	public function __construct(){
@@ -30,9 +31,9 @@ Class Pilot extends Pot {
 
 		} else {
 			$params = explode('/', $rw);
-			$page =										# normally htaccess handles feed and sitemap URI to
-			self::$protocol = end($params);				#    match syntax properly, e.g. cuts the thang behind slash off
-			$size = sizeof($params);
+			$page =							# normally htaccess handles feed and
+			self::$protocol = end($params);	#    sitemap URI to match syntax, it
+			$size = sizeof($params);		#    cuts the thang behind slash off
 		}
 
 		$this->__setRoute($params, $page, $rw, $size);
@@ -55,7 +56,7 @@ Class Pilot extends Pot {
 				$page =
 				$size = null;
 
-			else {										# shift json, update size and $page
+			else {							# shift json, update size and $page
 				array_pop($params);
 				$rw = substr($rw, 0, strrpos($rw, '/'));
 				--$size;
@@ -64,13 +65,18 @@ Class Pilot extends Pot {
 		}
 
 		switch ($page){
-			case null:									# html, json root (page 1)
+			case null:
+
+				# html, json root (page 1)
+
 				$this->__initialize('index');
 				break;
 
 			case 'sitemap':
 
-				if ($size === 1){						# sitemap altogether
+				# sitemap altogether
+
+				if ($size === 1){
 					self::$pageType = 'index';
 					self::$protocol = $page;
 					$this->__load();
@@ -82,7 +88,9 @@ Class Pilot extends Pot {
 
 			case 'atom':
 
-				if ($size === 1){						# feed root
+				# feed root
+
+				if ($size === 1){
 					self::$pageType = 'index';
 					self::$protocol = $page;
 					$this->__load();
@@ -90,7 +98,9 @@ Class Pilot extends Pot {
 					break;
 				}
 
-				if (	$size === 2						# feed content pot
+				# feed content pot
+
+				if (	$size === 2
 					&&	parent::$path = $this->__isPot($params[0])
 				){
 					if (App::POT_FILTER === 1){
@@ -112,12 +122,16 @@ Class Pilot extends Pot {
 
 				if (App::ARCHIVE === 1){
 
-					if ($size === 1){					# archive root
-						$this->__initialize('archive');	# not “App::ARCHIVE_STR”, won’t comply with
-						break;							#    filename of class (= $pageType) to load
-					}
+					# archive root
 
-					if (	$size === 2					# archive content pot
+					if ($size === 1){
+						$this->__initialize('archive');
+						break;				# because App::ARCHIVE_STR must not
+					}						#    comply with page-type name
+
+					# archive content pot
+
+					if (	$size === 2
 						&&	parent::$path = $this->__isPot($params[0])
 					){
 						Elf::redirect('location: ' . App::$baseURL . $page . '/');
@@ -136,7 +150,9 @@ Class Pilot extends Pot {
 				$this->__initialize('index');
 				break;
 		}
-														# 404 not found
+
+		# 404 not found
+
 		Elf::sendExit(404, 'The requested URL ' . $_SERVER['REQUEST_URI'] . ' was not found on this server.');
 	}
 
@@ -152,13 +168,17 @@ Class Pilot extends Pot {
 		if (parent::$path = $this->__isPot($params[0])){
 			self::$contentPot = basename(parent::$path);
 
-			if ($size === 1){							# html, json content pot (page 1)
+			# html, json content pot (page 1)
+
+			if ($size === 1){
 
 				if (App::POT_FILTER === 1)
 					$this->__initialize('index');
 
 				return 0;
 			}
+
+			# permalink
 
 			if (	preg_match('{
 					^
@@ -170,65 +190,71 @@ Class Pilot extends Pot {
 					$
 					}ix', $rw) === 1
 				&&	(parent::$path = $this->__isEntry())
-			){											# permalink
+			){
 				$this->__initialize('permalink');
 				return 0;
 			}
 
-			array_shift($params);						# shift content pot, update size
+			array_shift($params);			# shift content pot, update size
 			$rw = substr($rw, strpos($rw, '/') + 1);
 			--$size;
 		}
 
+		# html, json root/content pot (page 1)
+
 		if (preg_match('{
 			^
 			(?:
+				(?:
+					\d{4}					# yyyy
 					(?:
-						\d{4}					# yyyy
-						(?:
-							/						# slash
-							(0[1-9]|1[012])			# mm
-							(?:-(0[1-9]|1[012]))?	# -mm
-						)?
-					)
-				|							# or
-					(?:
+						/						# slash
 						(0[1-9]|1[012])			# mm
 						(?:-(0[1-9]|1[012]))?	# -mm
-					)
+					)?
+				)
+			|							# or
+				(?:
+					(0[1-9]|1[012])			# mm
+					(?:-(0[1-9]|1[012]))?	# -mm
+				)
 			)
 			$
 			}ix', $rw) === 1
-		){												# html, json root/content pot (page 1)
-			$rw = 2;									# indicate yyyy/mm[-mm] or mm[-mm] or yyyy
+		){									# indicate yyyy/mm[-mm]
+			$rw = 2;						#    or mm[-mm] or yyyy
+
+		# html, json root/content pot (page 1+)
 
 		} else if (preg_match('{
 			^
 			(?:
-					(?:
-						\d{4}/					# yyyy
-						(
-							(0[1-9]|1[012])			# mm
-							(?:-(0[1-9]|1[012]))?	# -mm
-							/						# slash
-						)?
-					)
-				|							# or
-					(?:
+				(?:
+					\d{4}/					# yyyy
+					(
 						(0[1-9]|1[012])			# mm
 						(?:-(0[1-9]|1[012]))?	# -mm
 						/						# slash
-					)
+					)?
+				)
+			|							# or
+				(?:
+					(0[1-9]|1[012])			# mm
+					(?:-(0[1-9]|1[012]))?	# -mm
+					/						# slash
+				)
 			)?
 			' . preg_quote(App::PAGE_STR) . '
 			/[1-9](?:\d+)?			# page slash n
 			$
 			}ix', $rw) === 1
-		){												# html, json root/content pot (page 1+)
-			self::$page = intval($page);
-			$rw = 4;									# indicate yyyy/mm[-mm]/page/n or mm[-mm]/page/n or yyyy/page/n
+		){
+			self::$page = intval($page);	# indicate yyyy/mm[-mm]/page/n or
+			$rw = 4;						#    mm[-mm]/page/n or yyyy/page/n
 
-		} else											# 404 not found
+		# 404 not found
+
+		} else
 			return 0;
 
 		if (	self::$contentPot !== 0
@@ -246,9 +272,9 @@ Class Pilot extends Pot {
 			$year =
 			$month = $params[0];
 
-			if ($size === $rw){							# year, month
-				$month = $params[1];
-				if (strpos($month, '-') !== false)			# season
+			if ($size === $rw){				# year, month
+				$month = $params[1];			# season
+				if (strpos($month, '-') !== false)
 					$month = array(
 						substr($month, 0, 2),
 						substr($month, 3)
@@ -256,12 +282,12 @@ Class Pilot extends Pot {
 
 			} else {
 
-				if (intval($month) > 12)				# year
+				if (intval($month) > 12)	# year
 					$month = 0;
 
-				else {									# month
+				else {						# month
 					$year = 0;
-					$month = $params[0];					# season
+					$month = $params[0];		# season
 					if (strpos($month, '-') !== false)
 						$month = array(
 							substr($month, 0, 2),
@@ -294,9 +320,9 @@ Class Pilot extends Pot {
 	# @param	string
 	# @return	string or integer
 
-	protected function __isPot($name){
-														# “strtolower($path)” will permit
-		foreach (App::$pots as $path){					#    uppercase characters for pot names as well
+	protected function __isPot($name){		# strtolower($path) permits
+											#    uppercase characters for
+		foreach (App::$pots as $path){		#    pot names as well
 			if (Elf::endsWith(strtolower($path), '/' . $name))
 				return $path;
 		}
@@ -317,16 +343,16 @@ Class Pilot extends Pot {
 
 		} else {
 			self::$protocol = 'html';
-			require_once(App::$propelRoot . '/nav.php');# will choose from app or its extension automatically
-			$this->__load($part);						#    through “App::$propelRoot”
-			new Html();
+			require_once(App::$propelRoot . '/nav.php');
+			$this->__load($part);			# chooses from app or its extension
+			new Html();						#    through App::$propelRoot
 		}
 	}
 
 
-	# @param	string
-														# will choose from app or its extension automatically
-	protected function __load($part = 'app/saft/'){		#    through “App::$propelRoot”
+	# @param	string						# chooses from app or its extension
+											#    through App::$propelRoot
+	protected function __load($part = 'app/saft/'){
 		require_once($part . self::$pageType . '/' . self::$pageType . '.php');
 		require_once(App::$propelRoot . '/' . self::$pageType . '/' . self::$protocol . '.php');
 	}
@@ -339,11 +365,11 @@ Class Pilot extends Pot {
 
 	public static function getContentType(&$contentType, &$cachename = ''){
 		$cachename.= empty($cachename) === false
-			? '.' . self::$protocol						# permalink
+			? '.' . self::$protocol			# permalink
 			: self::$protocol;
 
-		switch (self::$protocol){						# “json” must come before “html” in order to get “html” as needed
-			case 'sitemap':
+		switch (self::$protocol){			# json must come before html in
+			case 'sitemap':					#    order to get html as needed
 				$cachename.= '.xml';
 				$contentType = 'text/xml';
 				break;
@@ -357,7 +383,7 @@ Class Pilot extends Pot {
 				$contentType = 'application/json';
 				break;
 
-			default:									# “html”
+			default:						# html
 				$contentType = 'text/html';
 				break;
 		}

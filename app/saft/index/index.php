@@ -10,17 +10,22 @@ Class Index {
 	}
 
 
-	protected function __index(){
-		mb_internal_encoding('utf-8');					# make sure that utf-8 is set for multibyte content string-fu
+	protected function __index(){			# make sure that utf-8 is set for
+		mb_internal_encoding('utf-8');		#     multibyte content string-fu
 
 		Pilot::getContentType($contentType, $cachename);
 
 		if (Pilot::$path === 0)
 			Pilot::$path = App::$potRoot;
-														# i.a. checks for outdated entry list cache,
-		$entries = Pilot::scan();						#    “etagExpired” check depends on that
 
-		if (App::CACHE === 1){							# … cache path of entry list for hash creation and to verify cache relevance
+		# i.a. checks for outdated list cache, etagExpired check depends on that
+		$entries = Pilot::scan();
+
+		if (App::CACHE === 1){
+
+			# $arrCache = cache path of entry list,
+			#    for hash creation and to verify cache relevance
+
 			$arrCache = Pilot::$contentPot === 0
 				? App::$cacheRoot . '/' . App::ARR_CACHE_SUFFIX
 				: App::$cacheRoot . '/' . Pilot::$contentPot . '.' . App::ARR_CACHE_SUFFIX;
@@ -30,10 +35,15 @@ Class Index {
 
 			if ($cachename !== 'sitemap.xml')
 				$this->__adapt($entries, $cachename);
-														# cache exists, up-to-date and ready for output
-			if (Elf::cached($arrCache, $cachename) === 1){	# if short form of PHP’s open tag (“<?”) is enabled,
-															#    the include of an XML cache file (feed, sitemap) would
-															#    throw a Parse error due to its XML declaration(s)
+
+			# cache exists, up-to-date, ready for output
+
+			if (Elf::cached($arrCache, $cachename) === 1){
+
+				# if short form of PHP open tag (<?) is enabled, include of
+				#    XML cache file (feed, sitemap) would throw Parse error
+				#    due to its XML declaration(s)
+
 				if (Elf::endsWith($cachename, '.xml') === true)
 					echo file_get_contents(App::$cacheRoot . '/' . $cachename);
 				else
@@ -41,10 +51,10 @@ Class Index {
 			}
 
 			else {
-				ob_start();								# start output buffering
+				ob_start();					# start output buffering
 				$this->__build($entries, filemtime($arrCache));
 				Elf::writeToFile(App::$cacheRoot . '/' . $cachename, ob_get_contents(), 'wb');
-				ob_end_flush();							# stop output buffering
+				ob_end_flush();				# stop output buffering
 			}
 
 		} else {
@@ -54,8 +64,8 @@ Class Index {
 				$this->__adapt($entries, $cachename);
 
 			$this->__build($entries, empty($entries) === false
-				? filemtime(key($entries))				# “key(…)” = latest entry by name only, may be inaccurate in some cases
-				: filemtime(Pilot::$path)
+				? filemtime(key($entries))	# key() = latest entry by name only,
+				: filemtime(Pilot::$path)	#    may be inaccurate in some cases
 			);
 
 		}
@@ -97,7 +107,7 @@ Class Index {
 			if ($month !== 0){
 
 				if (is_array($month) === true){
-					sort($month);						# allow e.g. “12-10”, too
+					sort($month);			# allow e.g. 12-10, too
 					$namePart.= '.' . implode('-', $month);
 					$patternB.= $patternA . $month[1];
 					$patternA.= $month[0];
@@ -114,7 +124,9 @@ Class Index {
 		$size =
 		Pilot::$size = sizeof($entries);
 
-		if ($page > ceil($size / App::PER_PAGE)){		# 404 not found, beyond available pages
+		# 404, beyond available pages
+
+		if ($page > ceil($size / App::PER_PAGE)){
 			Elf::sendExit(404, 'The requested URL ' . $_SERVER['REQUEST_URI'] . ' was not found on this server.');
 		}
 
@@ -146,7 +158,7 @@ Class Index {
 
 	protected function __filter(&$entries, $patternA, $patternB = ''){
 
-		if ($patternB === ''){							# year and/or month
+		if ($patternB === ''){				# year and/or month
 			$vars = array(strlen($patternA));
 			$vars[] = $vars[0] === 2
 				? 4
@@ -159,7 +171,7 @@ Class Index {
 				return $name === $patternA;
 			});
 
-		} else {										# year and/or season
+		} else {							# year and/or season
 			$vars = array(strlen($patternA));
 			$vars[] = $vars[0] === 2
 				? 4
