@@ -46,12 +46,12 @@ Package Overview
 	/.gitignore
 	/LICENSE
 	/README.md
+	/VERSION
 	/apple-touch-icon.png
 	/favicon.ico
 	/htaccess
 	/index.php
 	/robots.txt
-	/VERSION
 
 
 Installation

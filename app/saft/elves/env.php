@@ -13,8 +13,10 @@ Class Env {
 	}
 
 	protected function __checkEnvironment(){
-											# make sure that register_globals is
-		if (ini_get('register_globals'))	#    turned off; depreciated >= 5.3
+
+		# make sure that register_globals is turned off; depreciated >= 5.3
+
+		if (ini_get('register_globals'))
 			Elf::sendExit(500, 'Automatically shut down due to the ability to insert data directly into the global namespace.<br>
 		Disable <code>register_globals</code> to proceed. <strong>This is a serious security precaution.</strong>');
 
@@ -28,7 +30,7 @@ Class Env {
 			'non' => array()
 		);
 		$this->__checkPerms();
-		$this->__checkPermsMsg();
+		$this->__buildPermsMsg();
 
 		# try to prevent from remote file inclusion (allow_url_include requires
 		#    allow_url_fopen to be on, fopen check covers both);
@@ -172,7 +174,7 @@ Class Env {
 
 	# @return	string
 
-	protected function __checkPermsMsg(){
+	protected function __buildPermsMsg(){
 		$absolute = rtrim(App::$absolute, '/');
 		$arr = self::$arr;
 		$msg = '';
