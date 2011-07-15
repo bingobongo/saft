@@ -43,29 +43,29 @@
 	<link rel="shortcut icon" href="{$baseURL}favicon.ico"/>
 	<link rel="apple-touch-icon" href="{$baseURL}apple-touch-icon.png"/>
 	<style type="text/css">
-html										{ background:#f0f2f2; }
-body										{ color:#262828; font-family:"Helvetica Neue",Helvetica,"Microsoft Sans Serif",sans-serif; margin:0; }
-h1,p,td,th									{ text-rendering:optimizeLegibility; }
-h1											{ margin:25px 25px 20px; }
-i											{ color:#b6b8b8; font-family:Georgia,serif; font-size:24px; font-weight:400; font-style:normal; }
-header										{ background:#e6e8e8; clear:both; padding:14px 0 3px; margin-bottom:25px; }
-header p									{ font-size:14px; margin:0px 25px 13px; }
+html			{ background:#f0f2f2; }
+body			{ color:#262828; font-family:"Helvetica Neue",Helvetica,"Microsoft Sans Serif",sans-serif; margin:0; }
+h1,p,td,th		{ text-rendering:optimizeLegibility; }
+h1				{ margin:25px 25px 20px; }
+i				{ color:#b6b8b8; font-family:Georgia,serif; font-size:24px; font-weight:400; font-style:normal; }
+header							{ background:#e6e8e8; clear:both; padding:14px 0 3px; margin-bottom:25px; }
+header p		{ font-size:14px; margin:0px 25px 13px; }
 a,
-a:link										{ color:#565858; font-weight:700; text-decoration:none; }
-a:visited									{ color:#767878; }
+a:link			{ color:#565858; font-weight:700; text-decoration:none; }
+a:visited		{ color:#767878; }
 a:focus,
-a:hover										{ color:#262828; }
-a:active									{ color:#767878; }
-table										{ border-collapse:collapse; margin-bottom:25px; width:100%; }
-tbody tr									{ border-top:1px solid #d6d8d8; }
-tbody tr:hover								{ background-color:#e6e8e8; }
+a:hover			{ color:#262828; }
+a:active		{ color:#767878; }
+table			{ border-collapse:collapse; margin-bottom:25px; width:100%; }
+tbody tr		{ border-top:1px solid #d6d8d8; }
+tbody tr:hover	{ background-color:#e6e8e8; }
 td,
-th											{ line-height:1.5; padding:5px 5px; }
-td											{ font-size:16px; }
-th											{ font-size:14px; text-align:left; }
-.first										{ padding-left:25px; }
-.last										{ padding-right:25px; }
-footer										{ color:#767878; font-family:Georgia,sans-serif; margin:16px 0 16px 25px; }
+th				{ line-height:1.5; padding:5px 5px; }
+td				{ font-size:16px; }
+th				{ font-size:14px; text-align:left; }
+.first			{ padding-left:25px; }
+.last			{ padding-right:25px; }
+footer			{ color:#767878; font-family:Georgia,sans-serif; margin:16px 0 16px 25px; }
 	</style>
 </head>
 <body>
@@ -100,7 +100,7 @@ footer										{ color:#767878; font-family:Georgia,sans-serif; margin:16px 0 1
 		</tbody>
 	</table>
 	<footer> 
-		<small>© 2004-<xsl:value-of select="substring(sitemap:urlset/sitemap:url/sitemap:lastmod, 0, 5)"/>&#160;<xsl:value-of select="substring-before(substring-after(sitemap:urlset/sitemap:url/sitemap:loc, 'http://'), '/')"/>/</small> 
+		<small>© 2004-<xsl:value-of select="substring(sitemap:urlset/sitemap:url/sitemap:lastmod, 0, 5)"/>&#160;<xsl:value-of select="substring-before(substring-after(sitemap:urlset/sitemap:url/sitemap:loc, 'http://'), '/')"/>/. Content managed with <a href="http://doogvaard.net/speelplaats/2011/07/04/saft/">Saft</a>.</small> 
 	</footer>
 </body>
 </html>

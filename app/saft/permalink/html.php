@@ -10,7 +10,7 @@ Class Html extends Permalink {
 	}
 
 
-	protected function __build($lastmod){				# $lastmod is superfluous for permalink
+	protected function __build($lastmod){	# $lastmod superfluous for permalink
 		parent::__prepare($entry);
 
 		$title = array_shift($entry);
@@ -43,7 +43,7 @@ Class Html extends Permalink {
 		echo '
 	<footer>
 		<p id=footer>
-			<small>© 2010-' , date('Y ') , str_replace('www.', '', $_SERVER['HTTP_HOST']) , '/</small>
+			<small>© 2010-' , date('Y ') , str_replace('www.', '', $_SERVER['HTTP_HOST']) , '/. Content managed with <a href=http://doogvaard.net/speelplaats/2011/07/04/saft/>Saft</a>.</small>
 	</footer>
 	<!--[if IE]><p id=blues><s>Internet Explorer</s><![endif]-->
 	<!--[if !IE]>-->
