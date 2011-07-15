@@ -6,5 +6,6 @@
 /log/
 /pot/*
 !/pot/.*
+!/pot/example-content-pot/
 /tmp/
 /todo.txt

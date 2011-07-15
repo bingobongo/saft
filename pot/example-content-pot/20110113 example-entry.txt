@@ -1,0 +1,9 @@
+title: Example entry title
+description: Example entry description …
+
+Start writing the entry …
+
+[@1]
+
+This’ an entry asset.
+[Read more.](http://doogvaard.net/speelplaats/2011/07/04/saft/)
