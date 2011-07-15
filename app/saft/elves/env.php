@@ -85,7 +85,7 @@ Class Env {
 
 		# root
 
-		$this->__isSecure($root, $permsAsset);
+	#	$this->__isSecure($root, $permsAsset);
 		$this->__isSecure($root . '/index.php');
 		$this->__isSecure($root . '/.htaccess', 0640);
 
