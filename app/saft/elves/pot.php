@@ -5,7 +5,7 @@ namespace Saft;
 
 Class Pot {
 
-	# BEWARE: the timestamp of a directory doesn’t reflect
+	# BEWARE: the timestamp of a directory does not reflect
 	#    the changes that are made inside a subdirectory of it
 
 	public static $path = 0;
@@ -19,18 +19,18 @@ Class Pot {
 			if (Elf::cached(App::$potRoot, $arrCachename) === 0){
 				$this->__globPot();
 
-				$cachePerms = App::$perms['cache'];
-				Elf::makeDirOnDemand(App::$root . '/cache', $cachePerms);
-				Elf::makeDirOnDemand(App::$cacheRoot, $cachePerms);
+				$permsCache = App::$perms['cache'];
+				Elf::makeDirOnDemand(App::$root . '/cache', $permsCache);
+				Elf::makeDirOnDemand(App::$cacheRoot, $permsCache);
 
 				foreach (App::$pots as $path){
 					$path = App::$cacheRoot . '/' . basename($path);
-					Elf::makeDirOnDemand($path, $cachePerms);
+					Elf::makeDirOnDemand($path, $permsCache);
 				}
 
 				Elf::writeToFile(App::$cacheRoot . '/' . $arrCachename, json_encode(App::$pots), 'wb');
 
-				unset($arrCachename, $cachePerms, $path);
+				unset($arrCachename, $path, $permsCache);
 
 			} else
 				App::$pots = $this->__cacheDecoded($arrCachename);
@@ -75,11 +75,14 @@ Class Pot {
 
 		foreach ($pots as $path){
 			$arrCachename = basename($path) . '.' . App::ARR_CACHE_SUFFIX;
-			$note = App::$author === 0					# no Maat authenticated: yes, scheduled entries
-				? App::$cacheRoot . '/' . basename($path) . '.note.txt'
-				: 0;
 
-			if (is_readable($note) === false)
+			if (App::$author === 0){		# no Maat author => yes, scheduled
+				$note = App::$cacheRoot . '/' . basename($path) . '.note.txt';
+
+				if (is_readable($note) === false)
+					$note = 0;
+
+			} else
 				$note = 0;
 
 			if (	file_exists($path . '/0_REMOVE-TO-FORCE-CACHE-UPDATE.txt') === false
@@ -88,17 +91,17 @@ Class Pot {
 					&&	intval(file_get_contents($note)) <= App::$today
 					)
 			){
-				if ($note !== 0)
-					unlink($note);						# reset memory of scheduled entries
+				if ($note !== 0)			# reset memory of scheduled entries
+					unlink($note);
 
 				$parts = self::getEntries($path);
 				Elf::writeToFile(App::$cacheRoot . '/' . $arrCachename, json_encode($parts), 'wb');
 
 				$path = fopen($path . '/0_REMOVE-TO-FORCE-CACHE-UPDATE.txt', 'wb');
-				fclose($path);							# mark as cached
+				fclose($path);				# mark as cached
 
-				if (empty($parts) === false)
-					$entries+= $parts;					# this’ possible as long as array key = path of entry => unique
+				if (empty($parts) === false)# += is possible as long as array
+					$entries+= $parts;		#    key = path of entry => unique
 
 				unset($pots[$r]);
 				$changed = 1;
@@ -111,14 +114,19 @@ Class Pot {
 
 		if ($changed === 0){
 
-			if (self::$path === App::$potRoot){			# check for root cache file and for removed content pots
+			if (self::$path === App::$potRoot){
+
+				# check for root cache file and for removed content pots
 
 				if (Elf::cached(App::$potRoot, App::ARR_CACHE_SUFFIX) === 1){
 					unset($arrCachename, $note, $path, $pots);
 					return self::__cacheDecoded(App::ARR_CACHE_SUFFIX);
 				}
-														# assumes that base and content pot URIs are valid
-			} else {									#    (no further sub directories nor combined or permalink URIs)
+
+			# assumes that base and content pot URI are valid
+			#    (no further subdirectories nor combined or permalink URI)
+
+			} else {
 				unset($note, $path, $pots);
 				return self::__cacheDecoded($arrCachename);
 			}
@@ -157,7 +165,7 @@ Class Pot {
 
 	public static function getEntries($potRoot, $regex = ''){
 
-		if ($regex === '')								# yyyymmdd perma-link.text
+		if ($regex === '')
 			$regex = '{
 				^
 				\d{4}						# yyyy
@@ -195,7 +203,7 @@ Class Pot {
 
 				foreach ($dir as $item){
 
-					if (strpos($item, '.') === 0)		# “Elf::startsWith($item, '.')” instead would retard bit
+					if (strpos($item, '.') === 0)
 						continue;
 
 					$itemPath = $path . '/' . $item;
@@ -205,7 +213,7 @@ Class Pot {
 
 					if (is_dir($itemPath) === true){
 
-						if (	$level < $depth			# lower than
+						if (	$level < $depth
 							&&	preg_match('{^[\w-]+$}i', $item) === 1
 						)
 							$subpots[] = $itemPath;
@@ -218,7 +226,9 @@ Class Pot {
 						if (intval($item) <= $today)
 							$entries[$itemPath] = basename($itemPath);
 
-						else if (App::$author === 0)	# no Maat authenticated: yes, scheduled entries
+						# no Maat author => yes, scheduled
+
+						else if (App::$author === 0)
 							$note[preg_replace('{^/([\w-]+).*$}i', '$1', str_replace(App::$potRoot, '', $itemPath))] = basename($itemPath);
 
 					} else
@@ -229,16 +239,18 @@ Class Pot {
 				}
 			}
 
-			$pots = $subpots;							# update pots array
-			$subpots = array();							# empty subpots array
+			$pots = $subpots;				# update pots array
+			$subpots = array();				# empty subpots array
 			++$level;
 
 			clearstatcache();
 		}
 
+		# write memory of scheduled entries
+
 		if (	App::CACHE === 1
 			&&	empty($note) === false
-		)												# write memory of scheduled entries
+		)
 			self::__remember($note);
 
 		natcasesort($entries);
@@ -253,8 +265,8 @@ Class Pot {
 
 	protected function __remember(&$note){
 		natcasesort($note);
-		$name = key($note);
-		$date = substr(array_shift($note), 0, 8);		# yyyymmdd
+		$name = key($note);					# yyyymmdd
+		$date = substr(array_shift($note), 0, 8);
 		Elf::writeToFile(App::$cacheRoot . '/' . $name . '.note.txt', $date, 'wb');
 		unset($date, $name);
 	}

@@ -8,15 +8,15 @@ Class Elf {
 
 	# @return	string
 
-	public static function URIpartToFilenamePart(){		# lazy, simplified pattern
+	public static function URIpartToFilenamePart(){
 		return preg_replace('{
-			^
-			[\w-]+					# content pot
-			/(\d{4})				# slash yyyy
-			/(\d{2})				# slash mm
-			/(\d{2})				# slash dd
-			/([\w-]+)				# slash permalink
-			(?:/json)?				# slash json
+			^				# lazy, simplified pattern
+			[\w-]+			# content pot
+			/(\d{4})		# slash yyyy
+			/(\d{2})		# slash mm
+			/(\d{2})		# slash dd
+			/([\w-]+)		# slash permalink
+			(?:/json)?		# slash json
 			$
 			}ix', '$1$2$3 $4', App::$rw
 		);
@@ -27,17 +27,17 @@ Class Elf {
 	# @param	integer
 	# @return	string
 
-	public static function entryPathToURLi($path, $i=0){# lazy, simplified pattern
+	public static function entryPathToURLi($path, $i=0){
 		$name = basename($path);
 		$contentPot = substr($path, strlen(App::$potRoot) + 1);
 		$contentPot = substr($contentPot, 0, strpos($contentPot, '/')) . preg_replace('{
-			^
-			(\d{4})					# yyyy
-			(\d{2})					# mm
-			(\d{2})					# dd
-			\s						# space
-			([\w-]+)				# permalink
-			\.[a-z]+				# .file extension
+			^				# lazy, simplified pattern
+			(\d{4})			# yyyy
+			(\d{2})			# mm
+			(\d{2})			# dd
+			\s				# space
+			([\w-]+)		# permalink
+			\.[a-z]+		# .file extension
 			$
 			}ix', '/$1/$2/$3/$4/', $name);
 		return $i === 0
@@ -49,15 +49,16 @@ Class Elf {
 	# @param	string
 	# @return	string
 
-	public static function entryPathToTitle($path){		# in this case preg_replace is faster than 
-		return ucwords(									#    substr (with lacy, simplified pattern only)
+	public static function entryPathToTitle($path){
+											# preg_replace with simplified
+		return ucwords(						#    pattern is faster than substr
 			str_replace('-', ' ', preg_replace('{
-				^
-				\d{8}				# yyyymmdd
-				\s					# space
-				([\w-]+)			# permalink
-				(?:\s\d)?			# space asset number
-				\.[a-z]+			# .file extension
+				^			# lazy, simplified pattern
+				\d{8}		# yyyymmdd
+				\s			# space
+				([\w-]+)	# permalink
+				(?:\s\d)?	# space asset number
+				\.[a-z]+	# .file extension
 				$
 				}ix', '$1', strtolower(basename($path))))
 		);
@@ -76,7 +77,7 @@ Class Elf {
 			(?:
 				md|txt|text
 			)$
-			}ix', basename($path)) === 1				# strrchr(Pilot::$path, '.') === '.txt'
+			}ix', basename($path)) === 1
 		){
 			$file = fopen($path, 'r');
 			$str = fgets($file);
@@ -92,20 +93,23 @@ Class Elf {
 
 
 	# @param	string
-	# @return	string
-														# if “%2F” is in “src” attribute of image/video element,
-	public static function toEntryAssetURI($path){		#    browser won’t respect absoluteness of a URI
+	# @return	string	if %2F is in src attribute of image/video element,
+	#					browser does not respect absoluteness of a URI
+
+	public static function toEntryAssetURI($path){
 		return App::$absolute . str_replace('%2F', '/', rawurlencode(substr($path, strlen(App::$potRoot . '/'))));
 	}
 
 
 	# @param	string
-	# @param	integer	“$perm” must be passed in octal (null in front), e.g. 0640
+	# @param	integer	in octal (null in front), e.g. 0640
+	#
+	#			make pot on demand + deletable via SFTP in non-shared envir.
 
 	public static function makeDirOnDemand($path, $perm){
 
-		if (is_dir($path) === false){					# make pot on demand and
-			mkdir($path, $perm);						#    deletable via SFTP in non-shared environments
+		if (is_dir($path) === false){
+			mkdir($path, $perm);
 			chmod($path, $perm);
 		}
 	}
@@ -150,15 +154,17 @@ Class Elf {
 	public static function getHash($path){
 
 		if (	App::PREV_NEXT === 1
-			&&	class_exists('Permalink') === true		# permalink with up-to-date adjacent entries as needed
-		)
+			&&	class_exists('Permalink') === true
+		)									# permalink with up-to-date adjacent
+											#    entries as needed
 			return file_exists(App::$cacheRoot . '/' . App::ARR_CACHE_SUFFIX) === true
-				? hash('ripemd160', $path					# take cache file of entry list into account or
-					. filemtime($path)
+				? hash('ripemd160', $path	# take cache file of entry list
+					. filemtime($path)		#    into account
 					. filemtime(App::$root . '/.htaccess')
 					. filemtime(App::$root . '/app/saft/app.php')
 					. filemtime(App::$cacheRoot . '/' . App::ARR_CACHE_SUFFIX))
-				: hash('ripemd160', $path . time());		# neutralize cache/ETag
+											# or neutralize cache/Etag
+				: hash('ripemd160', $path . time());
 		else
 			return hash('ripemd160', $path
 				. filemtime($path)
@@ -187,10 +193,10 @@ Class Elf {
 
 	# @param	string
 	# @param	string
-	# @return	string
+	# @return	string	if $str starts with pattern, return $str minus pattern
 
 	public static function getContext($str, $pattern){
-		return strpos($str, $pattern) === 0				# “self::startsWith($title, 'title:')” instead would retard bit
+		return strpos($str, $pattern) === 0
 			? htmlspecialchars(trim(substr($str, strlen($pattern))), ENT_QUOTES, 'utf-8', false)
 			: '';
 	}
@@ -233,8 +239,8 @@ Class Elf {
 	# @param	string
 	# @return	string
 
-	public static function avoidWidow($str){			# it’s a single word on a line by itself at the end of a paragraph
-		$s = strrpos($str, ' ');
+	public static function avoidWidow($str){# = a single word on a line by
+		$s = strrpos($str, ' ');			#   itself at the end of a paragraph
 
 		if ($s !== false){
 			$widow = substr($str, $s + 1);
@@ -261,15 +267,6 @@ Class Elf {
 	# @param	string
 	# @return	integer
 
-	public static function startsWith($space, $life){
-		return strpos($space, $life) === 0;
-	}
-
-
-	# @param	string
-	# @param	string
-	# @return	integer
-
 	public static function endsWith($space, $life){
 		return substr($space, - strlen($life)) === $life;
 	}
@@ -277,21 +274,22 @@ Class Elf {
 
 	# @param	string
 	# @param	string
-	# @return	string	return first part of string based on delimiter, remove that part from original string by reference
+	# @return	string	return first part of string based on delimiter,
+	#					remove that part from original string by reference
 
 	public static function strShiftFirst(&$str, $de){
 
-		if (($pos = strpos($str, $de)) === false)		# don’t touch original if delimiter doesn’t match
-			return '';
+		if (($pos = strpos($str, $de)) === false)
+			return '';	# do not touch original if delimiter does not match
 
 		$first = substr($str, 0, $pos);
-		$str = substr($str, $pos + strlen($de));		# overwrite string by reference and
-		return $first;									#    return cut off part
+		$str = substr($str, $pos + strlen($de));
+		return $first;	# overwrite string by reference and return cut off part
 	}
 
 
 	# @param	string
-	# @return	string	cut file extension inclusive “.” off
+	# @return	string	cut file extension inclusive dot off
 
 	public static function cutFileExt($name){
 		return substr($name, 0, strrpos($name, '.'));
@@ -299,7 +297,7 @@ Class Elf {
 
 
 	# @param	string
-	# @return	string	get file extension or at least the digits behind “.”
+	# @return	string	get file extension or at least the digits behind dot
 
 	public static function getFileExt($name){
 		return strtolower(substr($name, strrpos($name, '.') + 1));
@@ -332,32 +330,10 @@ Class Elf {
 	}
 
 
-	# @return	integer
+	# @return	integer	yyyymmdd
 
 	public static function getCurrentDate(){
-		return intval(date('Ymd', time() + (60 * 60)));	# yyyymmdd
-	}
-
-
-	# @return	array
-
-	public static function getPerms(){					# in octal (null in front)
-		$processOwnername = posix_getpwuid(posix_geteuid());
-		$processOwnername = $processOwnername['name'];
-
-		return $processOwnername === 'www'
-			? array(									# non-shared environment (Joyent SmartMachine)
-				'app' => 0710,
-				'app_parts' => 0640,
-				'asset' => 0775,						# not “0755”! because class Pot will be writing to content pot
-				'asset_parts' => (App::$maat === 1 ? 0664 : 0644),
-				'cache' => 0770)
-			: array(									# shared environment (Joyent Shared SmartMachine)
-				'app' => 0700,
-				'app_parts' => 0600,
-				'asset' => 0755,
-				'asset_parts' => 0644,
-				'cache' => 0700);
+		return intval(date('Ymd', time() + (60 * 60)));
 	}
 
 
@@ -375,7 +351,7 @@ Class Elf {
 	# @return	string
 
 	public static function stopMicrochronometer(){
-		return number_format(microtime(true) - PAGE_RENDER_START, 4);
+		return number_format(microtime(true) - RENDER_START, 4);
 	}
 
 
@@ -409,17 +385,20 @@ Class Elf {
 			header('Pragma: no-cache');
 
 		} else
-			header('Cache-Control: public, max-age=3153600');# s-maxage=,	#, proxy-revalidate
-	}
+			header('Cache-Control: public, max-age=3153600');
+	}										# s-maxage=,	#, proxy-revalidate
 
 
 	# @param	integer
 
 	public static function sendHttpHeader($code = 200){
 
+		# slows down ApacheBench test tremendously,
+		#    except in case of 400, 500, 503 ..!?
+
 		if ($code === 400 or $code === 500 or $code === 503)
-			header('HTTP/1.1 ' . self::$status[$code]);	# slows down ab (ApacheBench) test tremendously,
-														#    except in case of 400, 500, 503 … !?
+			header('HTTP/1.1 ' . self::$status[$code]);
+
 		header('Status: ' . self::$status[$code]);
 	}
 
@@ -441,15 +420,11 @@ Class Elf {
 
 	# @param	integer
 	# @param	string
-	# @param	string
 
-	public static function sendExit($code = 200, $msg = '', $pimp = ''){
-
-		if ($pimp !== '')
-			$pimp = ' Call ' . $pimp . '!';
+	public static function sendExit($code = 200, $msg = ''){
 
 		if ($msg !== '')
-			$msg = "\n\t<p>" . $msg . $pimp;
+			$msg = "\n\t<p>" . $msg;
 
 		$title =	$code === 200
 				&&	$msg === ''
@@ -481,7 +456,7 @@ Class Elf {
 		403 => '403 Forbidden',
 		404 => '404 Not Found',
 		500 => '500 Internal Server Error',
-		503 => '503 Service Unavailable'				# temporarily, best in combination with retry-after header
-	);
+		503 => '503 Service Unavailable'	# temporarily, best in combination
+	);										#    with retry-after header
 
 }
