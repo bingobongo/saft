@@ -48,10 +48,12 @@ body			{ color:#262828; font-family:"Helvetica Neue",Helvetica,"Microsoft Sans S
 h1,p,td,th		{ text-rendering:optimizeLegibility; }
 h1				{ margin:25px 25px 20px; }
 i				{ color:#b6b8b8; font-family:Georgia,serif; font-size:24px; font-weight:400; font-style:normal; }
-header							{ background:#e6e8e8; clear:both; padding:14px 0 3px; margin-bottom:25px; }
+header			{ background:#e6e8e8; clear:both; padding:14px 0 3px; margin-bottom:25px; }
 header p		{ font-size:14px; margin:0px 25px 13px; }
 a,
 a:link			{ color:#565858; font-weight:700; text-decoration:none; }
+footer a,
+footer a:link	{ font-weight:400; }
 a:visited		{ color:#767878; }
 a:focus,
 a:hover			{ color:#262828; }
@@ -72,8 +74,7 @@ footer			{ color:#767878; font-family:Georgia,sans-serif; margin:16px 0 16px 25p
 <body>
 	<h1>XML Sitemap <i>(<xsl:value-of select="$itemsum"/><xsl:value-of select="$type"/>, transformed with <xsl:value-of select="system-property('xsl:vendor')"/>)</i></h1>
 	<header>
-		<p>This is a XML Sitemap which is supposed to be processed by search engines like <a href="http://www.ask.com/">Ask</a>, <a href="http://www.baidu.com/">Baidu</a>, <a href="http://www.bing.com/">Bing</a>, <a href="http://blekko.com/">blekko</a>, <a href="http://duckduckgo.com/">DuckDuckGo</a>, <a href="http://www.google.com/">Google</a> or <a href="http://www.yahoo.com/">Yahoo!</a></p>
-		<p>You can find more information about XML sitemaps on <a href="http://sitemaps.org/">sitemaps.org</a>.</p>
+		<p>This is a XML Sitemap which is supposed to be processed by search engines like <a href="http://www.ask.com/">Ask</a>, <a href="http://www.baidu.com/">Baidu</a>, <a href="http://www.bing.com/">Bing</a>, <a href="http://blekko.com/">blekko</a>, <a href="http://duckduckgo.com/">DuckDuckGo</a>, <a href="http://www.google.com/">Google</a> or <a href="http://www.yahoo.com/">Yahoo!</a> You can find more information about XML sitemaps on <a href="http://sitemaps.org/">sitemaps.org</a>.</p>
 	</header>
 	<table>
 		<thead>

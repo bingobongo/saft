@@ -511,9 +511,9 @@ Class Elf {
 
 	# @param	integer
 	#
-	# ApacheBench slows down tremendously if HTTP/1.1 and 401|403|404;
-	#    therefore, send HTTP/1.0 instead; or try to use -k option
-	#    when running ab to enable the HTTP KeepAlive feature.
+	# ApacheBench slows down tremendously if HTTP/1.1 headers are sent;
+	#    therefore, send in some cases HTTP/1.0 instead; and/or use the
+	#    -k option when running ab to enable the HTTP KeepAlive feature!
 
 	public static function sendHttpHeader($code = 200){
 	#	header('Status: ' . self::$status[$code]);

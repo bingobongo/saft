@@ -19,12 +19,12 @@ Class App {
 		PREV_NEXT = 1,						# previous/next index/permalink
 		POT_FILTER = 1,						# content pot filter
 		DATE_FILTER = 1,					# year/season filter, archive page
-		PUBLIC_REGEX = '{^.*?/web/public/}',# regex that matches intern docu-
+		PUBLIC_REGEX = '{^.*?/web/public}',	# regex that matches intern docu-
 											#    ment root till items become
 											#    publicly available, i.e. on a
 											#    Joyent (Shared) SmartMachine
-											#    {^.*?/web/public/} or local
-											#    MAMP {^.*?/MAMP/htdocs/}
+											#    {^.*?/web/public} or local
+											#    MAMP {^.*?/MAMP/htdocs}
 		LANG = 'en',						# language code
 		ARCHIVE_STR = 'archive',			# "archive" for a URI like 
 											#    http://domain.tld/archive
@@ -75,7 +75,7 @@ Class App {
 
 			self::$root = $appRoot;
 			self::$potRoot = $appRoot . '/pot';
-			self::$absolute = '/' . trim(preg_replace(self::PUBLIC_REGEX, '', $appRoot), '/');
+			self::$absolute = '/' . trim(preg_replace(rtrim(self::PUBLIC_REGEX, '/'), '', $appRoot), '/');
 
 			if (self::$absolute !== '/')
 				self::$absolute.= '/';
