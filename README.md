@@ -41,8 +41,8 @@ Package Overview
 			standard.js
 	/pot/
 		example-content-pot/
-			20110113 example entry 1.txt
-			20110113 example entry.txt
+			20110113 example-entry 1.txt
+			20110113 example-entry.txt
 	/.gitignore
 	/LICENSE
 	/README.md
