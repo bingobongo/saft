@@ -3,6 +3,121 @@
 namespace Saft;
 
 
+Class Fruit extends \Exception {
+
+	public function squeeze(){
+		$msg = $this->getMessage();
+		$code = $this->getCode();
+		switch ($code){
+			case 301:
+			case 307:
+				header('HTTP/1.1 ' . Elf::$status[$code]);
+				exit(header('location: ' . $msg));
+			case 404:
+				if (empty($msg) === true)
+					$msg = 'The requested URL <code>' . $_SERVER['REQUEST_URI'] . '</code> was not found on this server. You may go back to <a href=' . App::$absolute . '>main page</a>.';
+				break;
+			case 500:
+				if (empty($msg) === true)
+					$msg = 'The server encountered an internal error or misconfiguration and was unable to complete the request.';
+				break;
+			case 503:
+				if (empty($msg) === true)
+					$msg = 'The requested URL <code>' . $_SERVER['REQUEST_URI'] . '</code> cannot be accessed temporarily on this server. Please try again later.';
+				break;
+			default:
+				if (empty($msg) === true)
+					$msg = 'Don&rsquo;t spiel!';
+				break;
+		}
+
+		# allow only white-listed IP addresses to view details
+		if (	App::DEBUG_MODE === 1
+			&&	preg_match('{
+			^
+			(?:' . str_replace(array('.', ':'), array('\.', '\:'), App::DEBUG_IP) . ')
+			$
+			}x', $_SERVER['REMOTE_ADDR']) === 1
+		)
+			$msg.= '
+	<p><a class=trace href="javascript:void(toggle(\'trace\'))"><span>▸</span> Stacktrace (<span>click</span>)</a>
+	<pre id=trace>' . $this->getTraceAsString() . "\n   thrown in <b>" . $this->getFile() . '</b> on line <b>' . $this->getLine() . "</b>\n   <small>" . substr(Elf::getSqueezedStr(), 5, -4) . '</small></pre>';
+
+		else if ($code === 500){
+			$pre = '<br>
+		<pre id=info>Get detailed information about what is exactly wrong by <b>adding your
+IP address to the list of allowed remote addresses</b> inside <i>app.php</i>.
+<small>You may use <a href=http://doogvaard.net/speelplaats/2011/07/19/ip/>IP</a> to cut and paste your current IP address.</small></pre>';
+
+			if (strpos($msg, 'Aut') === 0)
+				$msg = 'Automatically shut down due to a security precaution.' . $pre;
+
+			else if (strpos($msg, '<a') === 0)
+				$msg = 'Some required PHP extensions could not be loaded on this server, or some application parts have mad permissions or are missing at all.' . $pre;
+		}
+
+		Elf::sendExitHeader($code);
+		$title = $msg === 'Don&rsquo;t spiel!'
+			? $msg
+			: Elf::$status[$code];
+		echo '<!doctype html>
+<html dir=ltr lang=en id=' , Elf::getDomainID() , '>
+<head>
+	<meta charset=utf-8>
+	<title>' , $title , '</title>
+	<meta name=robots content=noarchive>
+	<link href=' , App::$absolute , 'favicon.ico rel=\'shortcut icon\'>
+	<link href=' , App::$absolute , 'apple-touch-icon.png rel=apple-touch-icon>
+	<style type=text/css>
+html			{ background:#f0f2f2; }
+body			{ color:#262828; font-family:"Helvetica Neue",Helvetica,"Microsoft Sans Serif",sans-serif; margin:0; }
+h1,p			{ text-rendering:optimizeLegibility; }
+h1				{ margin:25px 25px -5px; }
+body > p		{ background:#e6e8e8; clear:both; font-size:14px; padding:14px 25px 16px; margin:25px 0 0; }
+a,
+a:link			{ color:#565858; font-weight:700; text-decoration:none; }
+#footer a		{ font-weight:400; }
+a:visited		{ color:#767878; }
+a:focus,
+a:hover			{ color:#262828; }
+#footer a:hover	{ text-decoration:underline; }
+a:active		{ color:#767878; }
+i				{ font-style:italic; letter-spacing:1px; }
+i:before		{ content:\'\'; margin-left:1px; }
+i:after			{ content:\'\'; margin-right:1px; }
+pre,
+code			{ font-family:Monaco,\'Andale Mono\',\'AndaleMono\',monospace,Verdana,sans-serif; }
+pre				{ background:#d6d8d8; border-left:6px solid #d6d8d8; box-sizing:border-box; color:#868888; display:none; margin:0; min-width:100%; padding:20px; width:auto; -moz-box-sizing:border-box; -webkit-box-sizing:border-box; }
+#info			{ display:block; }
+code			{ color:#868888; }
+#footer			{ background:none; color:#767878; font-family:Georgia,sans-serif; font-size:16px; }
+	</style>
+<body>
+	<h1>' , substr($title, $title === "\n\t<p>Don&rsquo;t spiel!" ? 0 : 4) , '</h1>
+	<p>' , $msg , '
+	<p id=footer>
+		<small>© 2010-' , date('Y ') , str_replace('www.', '', $_SERVER['HTTP_HOST']) , '/. Content managed with <a href=http://doogvaard.net/speelplaats/2011/07/04/saft/>Saft</a>.</small>
+	<script>
+var toggle = function(id){
+	var	span = document.getElementsByClassName(id)[0].childNodes[0],
+		html = span.innerHTML;
+
+	if (html === \'▾\'){
+		span.innerHTML = \'▸\';
+		document.getElementById(id).style.display = \'none\';
+
+	} else {
+		span.innerHTML = \'▾\';
+		document.getElementById(id).style.display = \'block\';
+	}
+};
+	</script>';
+		exit;
+	}
+
+}
+
+
 Class Elf {
 
 
@@ -50,8 +165,8 @@ Class Elf {
 	# @return	string
 
 	public static function entryPathToTitle($path){
-											# preg_replace with simplified
-		return ucwords(						#    pattern is faster than substr
+		# preg_replace with simplified pattern is faster than substr
+		return ucwords(
 			str_replace('-', ' ', preg_replace('{
 				^			# lazy, simplified pattern
 				\d{8}		# yyyymmdd
@@ -93,6 +208,17 @@ Class Elf {
 
 
 	# @param	string
+	# @param	string
+	# @return	string	if $str starts with pattern, return $str minus pattern
+
+	public static function getContext($str, $pattern){
+		return strpos($str, $pattern) === 0
+			? htmlspecialchars(trim(substr($str, strlen($pattern))), ENT_QUOTES, 'utf-8', false)
+			: '';
+	}
+
+
+	# @param	string
 	# @return	string	if %2F is in src attribute of image/video element,
 	#					browser does not respect absoluteness of a URI
 
@@ -103,11 +229,9 @@ Class Elf {
 
 	# @param	string
 	# @param	integer	in octal (null in front), e.g. 0640
-	#
-	#			make pot on demand + deletable via SFTP in non-shared envir.
 
 	public static function makeDirOnDemand($path, $perm){
-
+		# make pot on demand + deletable via SFTP in non-shared environments
 		if (is_dir($path) === false){
 			mkdir($path, $perm);
 			chmod($path, $perm);
@@ -130,75 +254,6 @@ Class Elf {
 		fclose($path);
 
 		unset($content);
-	}
-
-
-	# @param	string
-	# @param	string
-	# @return	integer
-
-	public static function cached($source, $cachename = ''){
-		$cache = App::$cacheRoot . '/' . $cachename;
-		return ($cachename === ''
-			or	is_readable($cache) === false
-			or	is_readable($source) === false
-			or	filemtime($source) > filemtime($cache))
-			? 0
-			: 1;
-	}
-
-
-	# @param	string
-	# @return	string or integer
-
-	public static function getHash($path){
-
-		if (	App::PREV_NEXT === 1
-			&&	class_exists('Permalink') === true
-		)									# permalink with up-to-date adjacent
-											#    entries as needed
-			return file_exists(App::$cacheRoot . '/' . App::ARR_CACHE_SUFFIX) === true
-				? hash('ripemd160', $path	# take cache file of entry list
-					. filemtime($path)		#    into account
-					. filemtime(App::$root . '/.htaccess')
-					. filemtime(App::$root . '/app/saft/app.php')
-					. filemtime(App::$cacheRoot . '/' . App::ARR_CACHE_SUFFIX))
-											# or neutralize cache/Etag
-				: hash('ripemd160', $path . time());
-		else
-			return hash('ripemd160', $path
-				. filemtime($path)
-				. filemtime(App::$root . '/.htaccess')
-				. filemtime(App::$root . '/app/saft/app.php'));
-	}
-
-
-	# @param	string
-
-	public static function etagExpired($path){
-		$hash = self::getHash($path);
-		header('Etag: "' . $hash . '"');
-
-		if (	isset($_SERVER['HTTP_IF_NONE_MATCH']) === true
-			&&	stripslashes($_SERVER['HTTP_IF_NONE_MATCH']) === '"' . $hash . '"'
-		){
-			header('HTTP/1.1 ' . self::$status[304]);
-			header('Status: ' . self::$status[304]);
-			header('Content-Length: 0');
-			exit;
-
-		}
-	}
-
-
-	# @param	string
-	# @param	string
-	# @return	string	if $str starts with pattern, return $str minus pattern
-
-	public static function getContext($str, $pattern){
-		return strpos($str, $pattern) === 0
-			? htmlspecialchars(trim(substr($str, strlen($pattern))), ENT_QUOTES, 'utf-8', false)
-			: '';
 	}
 
 
@@ -238,9 +293,11 @@ Class Elf {
 
 	# @param	string
 	# @return	string
+	#
+	# a widow is a single word on a line by itself at the end of a paragraph
 
-	public static function avoidWidow($str){# = a single word on a line by
-		$s = strrpos($str, ' ');			#   itself at the end of a paragraph
+	public static function avoidWidow($str){
+		$s = strrpos($str, ' ');
 
 		if ($s !== false){
 			$widow = substr($str, $s + 1);
@@ -278,13 +335,13 @@ Class Elf {
 	#					remove that part from original string by reference
 
 	public static function strShiftFirst(&$str, $de){
-
+		# do not touch original if delimiter does not match
 		if (($pos = strpos($str, $de)) === false)
-			return '';	# do not touch original if delimiter does not match
-
+			return '';
+		# overwrite string by reference and return cut off part
 		$first = substr($str, 0, $pos);
 		$str = substr($str, $pos + strlen($de));
-		return $first;	# overwrite string by reference and return cut off part
+		return $first;
 	}
 
 
@@ -365,11 +422,60 @@ Class Elf {
 
 
 	# @param	string
-	# @param	integer
+	# @param	string
+	# @return	integer
 
-	public static function redirect($location, $code = 301){
-		self::sendHttpHeader($code);
-		exit(header($location));
+	public static function cached($source, $cachename = ''){
+		$cache = App::$cacheRoot . '/' . $cachename;
+		return ($cachename === ''
+			or	is_readable($cache) === false
+			or	is_readable($source) === false
+			or	filemtime($source) > filemtime($cache))
+			? 0
+			: 1;
+	}
+
+
+	# @param	string
+	# @return	string or integer
+
+	public static function getHash($path){
+
+		if (	App::PREV_NEXT === 1
+			&&	class_exists('Permalink') === true
+		)
+			# permalink with up-to-date adjacent entries as needed
+			return file_exists(App::$cacheRoot . '/' . App::ARR_CACHE_SUFFIX) === true
+				# take cache file of entry list into account
+				? hash('ripemd160', $path
+					. filemtime($path)
+					. filemtime(App::$root . '/.htaccess')
+					. filemtime(App::$root . '/app/saft/app.php')
+					. filemtime(App::$cacheRoot . '/' . App::ARR_CACHE_SUFFIX))
+				# or neutralize cache/Etag
+				: hash('ripemd160', $path . time());
+		else
+			return hash('ripemd160', $path
+				. filemtime($path)
+				. filemtime(App::$root . '/.htaccess')
+				. filemtime(App::$root . '/app/saft/app.php'));
+	}
+
+
+	# @param	string
+
+	public static function etagExpired($path){
+		$hash = self::getHash($path);
+		header('Etag: "' . $hash . '"');
+
+		if (	isset($_SERVER['HTTP_IF_NONE_MATCH']) === true
+			&&	stripslashes($_SERVER['HTTP_IF_NONE_MATCH']) === '"' . $hash . '"'
+		){
+	#		header('Status: ' . self::$status[304]);
+			header('HTTP/1.1 ' . self::$status[304]);
+			header('Content-Length: 0');
+			exit;
+		}
 	}
 
 
@@ -383,23 +489,9 @@ Class Elf {
 		if (App::CACHE === 0){
 			header('Cache-Control: no-cache, must-revalidate');
 			header('Pragma: no-cache');
-
-		} else
+		
+		} else	# s-maxage=,	#, proxy-revalidate
 			header('Cache-Control: public, max-age=3153600');
-	}										# s-maxage=,	#, proxy-revalidate
-
-
-	# @param	integer
-
-	public static function sendHttpHeader($code = 200){
-
-		# slows down ApacheBench test tremendously,
-		#    except in case of 400, 500, 503 ..!?
-
-		if ($code === 400 or $code === 500 or $code === 503)
-			header('HTTP/1.1 ' . self::$status[$code]);
-
-		header('Status: ' . self::$status[$code]);
 	}
 
 
@@ -408,40 +500,53 @@ Class Elf {
 
 	public static function sendExitHeader($code = 200, $type = 'text/html'){
 		self::sendHttpHeader($code);
-
-		if ($code === 503)
-			header('Retry-After: 3600');
-
 		header('Content-Type: ' . $type . '; charset=utf-8');
 		header('Cache-Control: no-cache, must-revalidate');
 		header('Pragma: no-cache');
+
+		if ($code === 503)
+			header('Retry-After: 3600');
 	}
 
 
 	# @param	integer
-	# @param	string
+	#
+	# ApacheBench slows down tremendously if HTTP/1.1 and 401|403|404;
+	#    therefore, send HTTP/1.0 instead; or try to use -k option
+	#    when running ab to enable the HTTP KeepAlive feature.
 
-	public static function sendExit($code = 200, $msg = ''){
+	public static function sendHttpHeader($code = 200){
+	#	header('Status: ' . self::$status[$code]);
+		header('HTTP/1.' . (($code > 400 && $code < 405) ? '0 ' : '1 ') . self::$status[$code]);
+	}
 
-		if ($msg !== '')
-			$msg = "\n\t<p>" . $msg;
 
-		$title =	$code === 200
-				&&	$msg === ''
-			? 'Don&rsquo;t spiel!'
-			: self::$status[$code];
+	public static function getPerms(){
+		$processOwner = posix_getpwuid(posix_geteuid());
+		$processOwner = $processOwner['name'];
 
-		self::sendExitHeader($code);
+		# Joyent SmartMachine, also applies to many other server environments
+		if (	$processOwner === 'www'
+			or	strpos(App::$root, '/users/home/') !== 0
+		)
+			App::$perms = array(
+				'app' => 0710,
+				'app_parts' => 0640,
+				# /pot must be group-writable
+				'asset' => 0775,
+				'asset_parts' => (App::$maat === 1 ? 0664 : 0644),
+				'cache' => 0770
+			);
 
-		exit(
-		'<!doctype html>
-<html dir=ltr lang=en id=' . self::getDomainID() . '>
-<head>
-	<meta charset=utf-8>
-	<title>' . $title . '</title>
-<body>
-	<h1>' . substr($title, $title === 'Don&rsquo;t spiel!' ? 0 : 4) . '</h1>' . $msg
-		);
+		# Joyent Shared SmartMachine
+		else
+			App::$perms = array(
+				'app' => 0700,
+				'app_parts' => 0600,
+				'asset' => 0755,
+				'asset_parts' => 0644,
+				'cache' => 0700
+			);
 	}
 
 
@@ -456,7 +561,8 @@ Class Elf {
 		403 => '403 Forbidden',
 		404 => '404 Not Found',
 		500 => '500 Internal Server Error',
-		503 => '503 Service Unavailable'	# temporarily, best in combination
-	);										#    with retry-after header
+		# temporarily, best in combination with retry-after header
+		503 => '503 Service Unavailable'
+	);
 
 }

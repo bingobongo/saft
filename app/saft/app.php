@@ -9,20 +9,22 @@ Class App {
 		ON = 1,								# app
 		CACHE = 0,							# cache
 		DEBUG_MODE = 1,						# debug mode, turn on for install
+		DEBUG_IP = '127.0.0.1|::1',			# vertical-bar-separated list of
+											#    remote adrresses that may be
+											#    shown extended debug info
 		CHRONO = 1,							# memory, memory peak usage; page
 											#    creation time, CPU time (user,
 											#    system) as comment in source
-		JSON = 1,							# JSON, i.e. http://domain.tld/json
-		ARCHIVE = 1,						# year/season filter, archive page
-		POT_FILTER = 1,						# content pot filter
 		PAGINATE = 1,						# paginate
 		PREV_NEXT = 1,						# previous/next index/permalink
-		PUBLIC_REGEX = '{^.*?/web/public}',	# regex that matches intern docu-
+		POT_FILTER = 1,						# content pot filter
+		DATE_FILTER = 1,					# year/season filter, archive page
+		PUBLIC_REGEX = '{^.*?/web/public/}',# regex that matches intern docu-
 											#    ment root till items become
 											#    publicly available, i.e. on a
 											#    Joyent (Shared) SmartMachine
-											#    {^.*?/web/public} or a local
-											#    MAMP server {^.*?/MAMP/htdocs}
+											#    {^.*?/web/public/} or local
+											#    MAMP {^.*?/MAMP/htdocs/}
 		LANG = 'en',						# language code
 		ARCHIVE_STR = 'archive',			# "archive" for a URI like 
 											#    http://domain.tld/archive
@@ -61,80 +63,55 @@ Class App {
 		$pots,
 		$maat = 0,
 		$author = 0,
+		$archive = 0,
 		$rw;
 
 
 	public function __construct($appRoot){
 		require_once('elves/elf.php');
+		try {
+			if (self::ON !== 1)
+				throw new Fruit('', 503);
 
-		if (self::ON !== 1)
-			Elf::sendExit(503, 'The requested URL ' . $_SERVER['REQUEST_URI'] . ' cannot be accessed temporarily on this server. Please try again later.');
+			self::$root = $appRoot;
+			self::$potRoot = $appRoot . '/pot';
+			self::$absolute = '/' . trim(preg_replace(self::PUBLIC_REGEX, '', $appRoot), '/');
 
-		self::$absolute = preg_replace(self::PUBLIC_REGEX, '', $appRoot) . '/';
-		self::$root = $appRoot;
-		self::$potRoot = $appRoot . '/pot';
+			if (self::$absolute !== '/')
+				self::$absolute.= '/';
 
-		if (is_dir(self::$root . '/app/maat') === true)
-			self::$maat = 1;
+			if (is_dir(self::$root . '/app/maat') === true)
+				self::$maat = 1;
 
-		$this->__getPerms();
+			Elf::getPerms();
 
-		if (self::DEBUG_MODE === 1){
-			require_once('elves/env.php');
-			$env = new Env();
-			unset($env);
+			if (self::DEBUG_MODE === 1){
+				require_once('elves/env.php');
+				$env = new Env();
+				unset($env);
+			}
+
+			$this->__checkURI();
+			require_once('elves/pot.php');
+			require_once('elves/pilot.php');
+
+			# check for Maat author in URI
+			if (	strpos(self::$rw, 'maat/') === 0
+				&&	self::$maat === 1
+			){  
+				require_once($appRoot . '/app/maat/app.php');
+				new Maat($appRoot);
+			}
+
+			self::$assetRoot = $appRoot . '/asset/saft';
+			self::$cacheRoot = $appRoot . '/cache/saft';
+			self::$baseURI = ltrim(self::$absolute, '/');
+			self::$baseURL = 'http://' . $_SERVER['HTTP_HOST'] . self::$absolute;
+			self::$today = Elf::getCurrentDate();
+			new Pilot();
+		} catch (Fruit $f){
+			$f->squeeze();
 		}
-
-		$this->__checkURI();
-		require_once('elves/pot.php');
-		require_once('elves/pilot.php');
-
-		# check for Maat author
-
-		if (	strpos(self::$rw, 'maat/') === 0
-			&&	self::$maat === 1
-		){  
-			require_once($appRoot . '/app/maat/app.php');
-			new Maat($appRoot);
-		}
-
-		self::$assetRoot = $appRoot . '/asset/saft';
-		self::$cacheRoot = $appRoot . '/cache/saft';
-		self::$baseURI = ltrim(self::$absolute, '/');
-		self::$baseURL = 'http://' . $_SERVER['HTTP_HOST'] . self::$absolute;
-		self::$today = Elf::getCurrentDate();
-
-		new Pilot();
-	}
-
-
-	private function __getPerms(){
-		$processOwner = posix_getpwuid(posix_geteuid());
-		$processOwner = $processOwner['name'];
-
-		# Joyent SmartMachine (also applies to many other server environments)
-
-		if (	$processOwner === 'www'
-			or	strpos(self::$root, '/users/home/') !== 0
-		)
-			self::$perms = array(
-				'app' => 0710,
-				'app_parts' => 0640,
-				'asset' => 0775,			# /pot must be group-writable!
-				'asset_parts' => (self::$maat === 1 ? 0664 : 0644),
-				'cache' => 0770
-			);
-
-		# Joyent Shared SmartMachine
-
-		else
-			self::$perms = array(
-				'app' => 0700,
-				'app_parts' => 0600,
-				'asset' => 0755,
-				'asset_parts' => 0644,
-				'cache' => 0700
-			);
 	}
 
 
@@ -142,34 +119,28 @@ Class App {
 	# @return	string	by reference or redirect
 
 	private function __checkURI($location = null){
-		$absolute = self::$absolute;
-		$rw =
-		self::$rw = preg_replace('@/{2,}@i', '/', trim(strip_tags(strtolower(rawurldecode($_GET['rw']))), ' /'), -1, $r);
+		$rw = self::$rw = preg_replace('@/{2,}@i', '/', trim(strip_tags(strtolower(rawurldecode($_GET['rw']))), ' /'), -1, $r);
 
 		# a-zA-Z0-9, underscore, minus, slash are valid
-
 		if (	$rw !== ''
 			&&	preg_match('{^[\w/-]+$}i', $rw) === 0
 		)
-			$location = $absolute;
+			$location = self::$absolute;
 
 		# multiple slashes
-
 		else if ($r !== 0)
 			$location = '/' . $rw . '/';
 
-		# invalid path ($rw path does not start with $absolute path)
+		# invalid path, $rw must start with $absolute path
+		else if (strpos($rw === '' ? '/' : '/' . $rw . '/', self::$absolute) !== 0){
 
-		else if (strpos($rw === '' ? '/' : '/' . $rw . '/', $absolute) !== 0){
-
-			# $rw path may not start with "pot", htaccess should handle this
-
+			# $rw may not start with "pot", htaccess usually handles this
 			if (strpos($rw, 'pot') === 0)
 				$rw = strpos($rw, '/') !== false
 					? substr($rw, strpos($rw, '/') - 1)
-					: $absolute;
+					: self::$absolute;
 			else
-				$rw = $absolute;
+				$rw = self::$absolute;
 
 			$location = strrchr($rw, '/') !== '/'
 				? $rw . '/'
@@ -177,13 +148,11 @@ Class App {
 		}
 
 		if ($location !== null)
-			Elf::redirect('location: http://' . $_SERVER['HTTP_HOST'] . $location);
+			throw new Fruit('http://' . $_SERVER['HTTP_HOST'] . $location, 301);
 
 		# make ready for routing
-
-		self::$rw = substr(self::$rw, strlen($absolute) - 1);
-
-		unset($absolute, $location, $rw);
+		self::$rw = substr(self::$rw, strlen(self::$absolute) - 1) or null;
+		unset($location, $rw);
 	}
 
 }

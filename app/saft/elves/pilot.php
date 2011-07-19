@@ -6,6 +6,7 @@ namespace Saft;
 Class Pilot extends Pot {
 
 	public static
+		$archive = 0,						# for navigate
 		$contentPot = 0,
 		$month = 0,
 		$page = 0,							# for paginate
@@ -22,19 +23,18 @@ Class Pilot extends Pot {
 
 
 	protected function __route(){
-		$rw = App::$rw;
+		$params = $page = $size = $rw = App::$rw;
 
-		if ($rw === false){
-			$params =
-			$page =
-			$size = null;
-
-		} else {
+		if ($rw !== null){
 			$params = explode('/', $rw);
-			$page =							# normally htaccess handles feed and
-			self::$protocol = end($params);	#    sitemap URI to match syntax, it
-			$size = sizeof($params);		#    cuts the thang behind slash off
+			$page = self::$protocol = end($params);
+			$size = sizeof($params);
 		}
+
+		if (	App::DATE_FILTER === 1
+			&&	is_file(App::$propelRoot . '/archive/archive.php') === true
+		)
+			self::$archive = 1;
 
 		$this->__setRoute($params, $page, $rw, $size);
 	}
@@ -47,35 +47,25 @@ Class Pilot extends Pot {
 
 	protected function __setRoute(&$params, &$page, &$rw, &$size){
 
-		if (	App::JSON === 1
-			&&	$page === 'json'
-		){
-
+		if ($page === 'json'){
+			# html, json root (page 1)
 			if ($size === 1)
-				$params =
-				$page =
-				$size = null;
-
-			else {							# shift json, update size and $page
+				$params = $page = $size = null;
+			# prepare for further routing (shift json; update $size, $page)
+			else {
 				array_pop($params);
+				$page = end($params);
 				$rw = substr($rw, 0, strrpos($rw, '/'));
 				--$size;
-				$page = end($params);
 			}
 		}
 
 		switch ($page){
 			case null:
-
-				# html, json root (page 1)
-
 				$this->__initialize('index');
 				break;
 
 			case 'sitemap':
-
-				# sitemap altogether
-
 				if ($size === 1){
 					self::$pageType = 'index';
 					self::$protocol = $page;
@@ -83,13 +73,10 @@ Class Pilot extends Pot {
 					new Sitemap();
 					break;
 				}
-
 				continue;
 
 			case 'atom':
-
-				# feed root
-
+				# root, altogether
 				if ($size === 1){
 					self::$pageType = 'index';
 					self::$protocol = $page;
@@ -98,8 +85,7 @@ Class Pilot extends Pot {
 					break;
 				}
 
-				# feed content pot
-
+				# content pot, filtered
 				if (	$size === 2
 					&&	parent::$path = $this->__isPot($params[0])
 				){
@@ -109,51 +95,36 @@ Class Pilot extends Pot {
 						self::$protocol = $page;
 						$this->__load();
 						new Atom();
-
+					# redirect to root in case of disabled pot filter
 					} else
-						Elf::redirect('location: ' . App::$baseURL . $page . '/');
+						throw new Fruit(App::$baseURL . $page . '/', 301);
 
 					break;
 				}
-
 				continue;
 
 			case strtolower(App::ARCHIVE_STR):
-
-				if (App::ARCHIVE === 1){
-
-					# archive root
-
-					if ($size === 1){
-						$this->__initialize('archive');
-						break;				# because App::ARCHIVE_STR must not
-					}						#    comply with page-type name
-
-					# archive content pot
-
-					if (	$size === 2
-						&&	parent::$path = $this->__isPot($params[0])
-					){
-						Elf::redirect('location: ' . App::$baseURL . $page . '/');
-						break;
-					}
+				# archive, there can only be one;
+				#    App::ARCHIVE_STR must not comply with page-type name
+				if (	$size === 1
+					&&	self::$archive === 1
+				){
+					$this->__initialize('archive');
+					break;
 				}
-
 				continue;
 
 			default:
 
-				if ($this->__filterRoute($params, $page, $rw, $size) === 0)
+				if ($this->__filter($params, $page, $rw, $size) === 0)
 					break;
 
 				unset($page, $params, $rw, $size);
 				$this->__initialize('index');
 				break;
 		}
-
 		# 404 not found
-
-		Elf::sendExit(404, 'The requested URL ' . $_SERVER['REQUEST_URI'] . ' was not found on this server.');
+		throw new Fruit('', 404);
 	}
 
 
@@ -163,23 +134,18 @@ Class Pilot extends Pot {
 	# @param	integer
 	# @integer	integer
 
-	protected function __filterRoute(&$params, &$page, &$rw, &$size){
+	protected function __filter(&$params, &$page, &$rw, &$size){
 
 		if (parent::$path = $this->__isPot($params[0])){
 			self::$contentPot = basename(parent::$path);
 
 			# html, json content pot (page 1)
-
-			if ($size === 1){
-
-				if (App::POT_FILTER === 1)
-					$this->__initialize('index');
-
-				return 0;
-			}
+			if ($size === 1)
+				return App::POT_FILTER === 1
+					? 1
+					: 0;
 
 			# permalink
-
 			if (	preg_match('{
 					^
 					[\w-]+						# content pot
@@ -190,18 +156,23 @@ Class Pilot extends Pot {
 					$
 					}ix', $rw) === 1
 				&&	(parent::$path = $this->__isEntry())
-			){
+			)
 				$this->__initialize('permalink');
-				return 0;
-			}
 
-			array_shift($params);			# shift content pot, update size
+			# shift content pot, update size
+			array_shift($params);
 			$rw = substr($rw, strpos($rw, '/') + 1);
 			--$size;
 		}
 
-		# html, json root/content pot (page 1)
+		if (	self::$contentPot !== 0
+			&&	(	App::POT_FILTER === 0
+				or	App::DATE_FILTER === 0
+				)
+		)
+			return 0;
 
+		# html, json root/content pot (page 1)
 		if (preg_match('{
 			^
 			(?:
@@ -221,11 +192,11 @@ Class Pilot extends Pot {
 			)
 			$
 			}ix', $rw) === 1
-		){									# indicate yyyy/mm[-mm]
-			$rw = 2;						#    or mm[-mm] or yyyy
+		){
+			# 2 indicates yyyy/mm[-mm] or mm[-mm] or yyy
+			$rw = 2;
 
 		# html, json root/content pot (page 1+)
-
 		} else if (preg_match('{
 			^
 			(?:
@@ -249,56 +220,47 @@ Class Pilot extends Pot {
 			$
 			}ix', $rw) === 1
 		){
-			self::$page = intval($page);	# indicate yyyy/mm[-mm]/page/n or
-			$rw = 4;						#    mm[-mm]/page/n or yyyy/page/n
-
-		# 404 not found
+			# 4 indicates yyyy/mm[-mm]/page/n or mm[-mm]/page/n or yyyy/page/n
+			$rw = 4;
+			self::$page = intval($page);
 
 		} else
 			return 0;
 
-		if (	self::$contentPot !== 0
-			&&	(	App::ARCHIVE === 0
-				or	App::POT_FILTER === 0
-				)
-		)
-			return 0;
-
 		if ($params[0] !== strtolower(App::PAGE_STR)){
 
-			if (App::ARCHIVE === 0)
+			if (App::DATE_FILTER === 0)
 				return 0;
 
-			$year =
-			$month = $params[0];
-
-			if ($size === $rw){				# year, month
-				$month = $params[1];			# season
+			$year = $month = $params[0];
+			# year, month
+			if ($size === $rw){
+				$month = $params[1];
+				# season
 				if (strpos($month, '-') !== false)
 					$month = array(
 						substr($month, 0, 2),
 						substr($month, 3)
 					);
-
+			# year | month
 			} else {
-
-				if (intval($month) > 12)	# year
-					$month = 0;
-
-				else {						# month
+				# month
+				if (intval($month) <= 12){
 					$year = 0;
-					$month = $params[0];		# season
+					$month = $params[0];
+					# season
 					if (strpos($month, '-') !== false)
 						$month = array(
 							substr($month, 0, 2),
 							substr($month, 3)
 						);
-				}
+				# year
+				} else
+					$month = 0;
 			}
 
 			self::$year = $year;
 			self::$month = $month;
-
 			unset($month, $year);
 		}
 
@@ -310,23 +272,21 @@ Class Pilot extends Pot {
 
 	protected function __isEntry(){
 		$entry = preg_grep('{^' . preg_quote(Elf::URIpartToFilenamePart()) . '\.(?:' . App::FILE_EXT . ')$}i', parent::scan());
-
-		return empty($entry) === true
-			? 0
-			: key($entry);
+		return empty($entry) === false
+			? key($entry)
+			: 0;
 	}
 
 
 	# @param	string
 	# @return	string or integer
 
-	protected function __isPot($name){		# strtolower($path) permits
-											#    uppercase characters for
-		foreach (App::$pots as $path){		#    pot names as well
+	protected function __isPot($name){
+		# strtolower() permits uppercase content pot names
+		foreach (App::$pots as $path){
 			if (Elf::endsWith(strtolower($path), '/' . $name))
 				return $path;
 		}
-
 		return 0;
 	}
 
@@ -343,17 +303,25 @@ Class Pilot extends Pot {
 
 		} else {
 			self::$protocol = 'html';
+			# chooses from app or extension through App::$propelRoot
 			require_once(App::$propelRoot . '/nav.php');
-			$this->__load($part);			# chooses from app or its extension
-			new Html();						#    through App::$propelRoot
+			$this->__load($part);
+			new Html();
 		}
 	}
 
 
-	# @param	string						# chooses from app or its extension
-											#    through App::$propelRoot
+	# @param	string
+
 	protected function __load($part = 'app/saft/'){
+		# 404 not found
+		if (	is_file(App::$propelRoot . '/' . self::$pageType . '/' . self::$protocol . '.php') === false
+			or	is_file($part . self::$pageType . '/' . self::$pageType . '.php') === false
+		)
+			throw new Fruit('', 404);
+
 		require_once($part . self::$pageType . '/' . self::$pageType . '.php');
+		# chooses from app or extension through App::$propelRoot
 		require_once(App::$propelRoot . '/' . self::$pageType . '/' . self::$protocol . '.php');
 	}
 
@@ -365,11 +333,12 @@ Class Pilot extends Pot {
 
 	public static function getContentType(&$contentType, &$cachename = ''){
 		$cachename.= empty($cachename) === false
-			? '.' . self::$protocol			# permalink
+			# permalink
+			? '.' . self::$protocol
 			: self::$protocol;
 
-		switch (self::$protocol){			# json must come before html in
-			case 'sitemap':					#    order to get html as needed
+		switch (self::$protocol){
+			case 'sitemap':
 				$cachename.= '.xml';
 				$contentType = 'text/xml';
 				break;
@@ -378,12 +347,12 @@ Class Pilot extends Pot {
 				$cachename.= '.xml';
 				$contentType = 'application/atom+xml';
 				break;
-
+			# json must come before html to get html as needed
 			case 'json':
 				$contentType = 'application/json';
 				break;
-
-			default:						# html
+			# html
+			default:
 				$contentType = 'text/html';
 				break;
 		}

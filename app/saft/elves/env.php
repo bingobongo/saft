@@ -15,13 +15,11 @@ Class Env {
 	protected function __checkEnvironment(){
 
 		# make sure that register_globals is turned off; depreciated >= 5.3
-
 		if (ini_get('register_globals'))
-			Elf::sendExit(500, 'Automatically shut down due to the ability to insert data directly into the global namespace.<br>
-		Disable <code>register_globals</code> to proceed. <strong>This is a serious security precaution.</strong>');
+			throw new Fruit("Automatically shut down due to the ability to insert data directly into the global namespace.<br>\n\t\tDisable <code>register_globals</code> to proceed. <strong>This is a serious security precaution.</strong>", 500);
 
 		if (isset($_GET['rw']) !== true)
-			Elf::sendExit(500, 'Proper rewrite could not be performed on this server.');
+			throw new Fruit('Proper rewrite could not be performed on this server. Enabled <code>mod_rewrite</code> and htaccess file support is required.', 500);
 
 		$this->__checkExts();
 		self::$arr = array(
@@ -32,15 +30,12 @@ Class Env {
 		$this->__checkPerms();
 		$this->__buildPermsMsg();
 
-		# try to prevent from remote file inclusion (allow_url_include requires
-		#    allow_url_fopen to be on, fopen check covers both);
+		# try to prevent from remote file inclusion (allow_url_include
+		#    requires allow_url_fopen; fopen check covers both);
 		#    info about why this is not 100 % secure:
 		#       http://blog.php-security.org/archives/45-PHP-5.2.0-and-allow_url_include.html
-
 		if (ini_get('allow_url_fopen'))
-			Elf::sendExit(500, 'Automatically shut down due to allowed remote file inclusion.<br>
-		If this should be intended, just ignore it; the debug mode can now be turned off.<br>
-		<strong>But note that you better make sure you use <a href=http://www.hardened-php.net/suhosin/>Suhosin</a> in this case.</strong>');
+			throw new Fruit("Automatically shut down due to allowed remote file inclusion. If this should be intended, ignore it.<br>\n\t\t<strong>But note that you better make sure you use <a href=http://www.hardened-php.net/suhosin/>Suhosin</a> in this case.</strong><br>\n\t\tThe debug mode may now be turned off.", 500);
 	}
 
 
@@ -49,27 +44,22 @@ Class Env {
 	protected function __checkExts($arr = array()){
 
 		if (extension_loaded('json') === false)
-			$arr[] = 'JSON for application cache and configuration tasks';
-											# for content type conversion
+			$arr[] = "JSON Extension\n<small>for application cache and configuration tasks</small>";
+
 		if (extension_loaded('mbstring') === false)
-			$arr[] = 'MBSTRING for multibyte strings';
+			$arr[] = "MBSTRING Extension\n<small>for multibyte strings (content type conversion)</small>";
 
 		if (extension_loaded('posix') === false)
-			$arr[] = 'POSIX for permissions check';
+			$arr[] = "POSIX Extension\n<small>for permissions check</small>";
 
 		if (isset($arr[0]) === true){
-			$msg = 'The following required PHP extension(s) could not be loaded on this server.
-	<ol>';
+			$msg = "<a class=ext href=\"javascript:void(toggle('ext'))\"><span>▸</span> The following required PHP extension(s) could not be loaded on this server (<span>click</span>).</a>\n\t<pre id=ext>";
 
 			foreach ($arr as $str)
-				$msg.= '
-		<li>
-			' . $str;
+				$msg.= "\n" . $str . "\n";
 
-			$msg.= '
-	</ol>';
-
-			Elf::sendExit(500, $msg);
+			$msg.= '</pre>';
+			throw new Fruit($msg, 500);
 		}
 	}
 
@@ -84,11 +74,11 @@ Class Env {
 		$permsCache = $perms['cache'];
 
 		# root
+		if (App::$absolute !== '/')
+			$this->__isSecure($root, $permsAsset);
 
-	#	$this->__isSecure($root, $permsAsset);
 		$this->__isSecure($root . '/index.php');
 		$this->__isSecure($root . '/.htaccess', 0640);
-
 		$arr = array(
 			'/apple-touch-icon.png',
 			'/favicon.ico',
@@ -102,7 +92,6 @@ Class Env {
 			$this->__isSecure($root . $part, $permsAssetParts, 0644);
 
 		# app
-
 		$this->__isSecure($root . '/app');
 		$arr = $this->__rglob($root . '/app/saft', '/*', '/{*.json,*.php,*.txt}');
 
@@ -112,9 +101,7 @@ Class Env {
 		foreach ($arr['files'] as $path)
 			$this->__isSecure($path);
 
-
 		# asset
-
 		$arr = array(
 			'/asset',
 			'/asset/saft'
@@ -131,9 +118,7 @@ Class Env {
 		foreach ($arr['files'] as $path)
 			$this->__isSecure($path, $permsAssetParts, 0644);
 
-
 		# cache
-
 		$arr = array(
 			'/cache',
 			'/cache/saft'
@@ -152,14 +137,9 @@ Class Env {
 		foreach ($arr['files'] as $path)
 			$this->__isSecure($path, $permsAssetParts, 0644);
 
-
 		# pot
-
 		$this->__isSecure($root . '/pot', $permsAsset);
 		$arr = $this->__rglob($root . '/pot', '/*', '/{*.gif,*.jpe,*.jpeg,*.jpg,*.md,*.png,*.txt,*.text,*.webm,*.webp}');
-		$arr['dirs'] = array_filter($arr['dirs'], function ($path){
-			return preg_match('{[^\w-]+}i', basename($path)) !== 1;
-		});
 		$arr['files'] = array_filter($arr['files'], function ($path){
 			return basename($path) !== '0_REMOVE-TO-FORCE-CACHE-UPDATE.txt';
 		});
@@ -180,74 +160,55 @@ Class Env {
 		$msg = '';
 
 		# non-existent directories, files
-
 		if (isset($arr['non'][0]) === true){
-			$msg.= 'The following part';
+			$msg.= '<a class=non href="javascript:void(toggle(\'non\'))"><span>▸</span> The following part';
 			$msg.= isset($arr['non'][1]) === true
 				? 's of the application are'
 				: ' of the application is';
-			$msg.= ' non-existent on this server.
-	<ol>';
+			$msg.= " non-existent on this server (<span>click</span>).</a>\n\t<pre id=non>";
 
 			foreach ($arr['non'] as $str)
-				$msg.= '
-		<li>
-			<b><code>' . $absolute . $str . '</code></b>';
+				$msg.= "\n" . $absolute . $str . "\n";
 
-			$msg.= '
-	</ol>';
+			$msg.= '</pre>';
 		}
 
 		# directories that have mad permissions
-
 		if (isset($arr['directory'][0]) === true){
 			$msg.= $msg === ''
 				? ''
-				: '
-	<p>';
-			$msg.= 'The following director';
+				: "\n\t<p>";
+			$msg.= '<a class=dir href="javascript:void(toggle(\'dir\'))"><span>▸</span> The following director';
 			$msg.= isset($arr['directory'][1]) === true
 				? 'ies of the application have'
 				: 'y of the application has';
-			$msg.= ' mad permissions.
-	<ol>';
+			$msg.= " mad permissions (<span>click</span>).</a>\n\t<pre id=dir>";
 
 			foreach ($arr['directory'] as $array)
-				$msg.= '
-		<li>
-			<b><code>' . $absolute . $array[0] . '</code></b><br>
-			<small>currently ' . $array[1] . ' — expected ' . $array[2] . '</small>';
+				$msg.= "\n" . $absolute . $array[0] . "\n<small>currently " . $array[1] . ' — expected ' . $array[2] . "</small>\n";
 
-			$msg.= '
-	</ol>';
+			$msg.= '</pre>';
 		}
 
 		# files that have mad permissions
-
 		if (isset($arr['file'][0]) === true){
 			$msg.= $msg === ''
 				? ''
-				: '
-	<p>';
-			$msg.= 'The following file';
+				: "\n\t<p>";
+			$msg.= '<a class=fil href="javascript:void(toggle(\'fil\'))"><span>▸</span> The following file';
 			$msg.= isset($arr['file'][1]) === true
 				? 's of the application have'
 				: ' of the application has';
-			$msg.= ' mad permissions.
-	<ol>';
+			$msg.= " mad permissions (<span>click</span>).</a>\n\t<pre id=fil>";
 
 			foreach ($arr['file'] as $array)
-				$msg.= '
-		<li>
-			<b><code>' . $absolute . $array[0] . '</code></b><br>
-			<small>currently ' . $array[1] . ' — expected ' . $array[2] . '</small>';
+				$msg.= "\n" . $absolute . $array[0] . "\n<small>currently " . $array[1] . ' — expected ' . $array[2] . "</small>\n";
 
-			$msg.= '
-	</ol>';
+			$msg.= '</pre>';
 		}
 
 		if ($msg !== '')
-			Elf::sendExit(500, $msg);
+			throw new Fruit($msg, 500);
 	}
 
 
@@ -258,14 +219,12 @@ Class Env {
 	# @return	array
 
 	protected function __rglob($path, $patternD, $patternF, $mode = 0){
-		$path = preg_quote($path);
 		$dirs = glob($path . $patternD, GLOB_ONLYDIR | GLOB_NOSORT);
 
 		if ($mode !== 2)
 			$files = glob($path . $patternF, GLOB_BRACE | GLOB_NOSORT);
 
 		foreach ($dirs as $path){
-			$path = preg_quote($path);
 			$dirs = array_merge($dirs, $this->__rglob($path, $patternD, $patternF, 2));
 
 			if ($mode !== 2)
