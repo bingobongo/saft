@@ -17,7 +17,6 @@ Class JSON extends Permalink {
 		$descr = $entry[0] === ''
 			? array_shift($entry)
 			: Elf::escapeJSONStr(array_shift($entry));
-
 		$entry = implode($entry);
 
 		echo '{
@@ -28,7 +27,6 @@ Class JSON extends Permalink {
 	"rights": "(C) 2010-' , date('Y ') , str_replace('www.', '', $_SERVER['HTTP_HOST']) , '/",
 	"content": "' , Elf::escapeJSONStr($entry) , '"
 }';
-
 		unset($descr, $entry, $title);
 	}
 

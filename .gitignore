@@ -1,5 +1,6 @@
 # Maat, cache, log, content pots #
 ##################################
+0_REMOVE-TO-FORCE-CACHE-UPDATE.txt
 /app/maat/*
 /asset/maat/*
 /cache/

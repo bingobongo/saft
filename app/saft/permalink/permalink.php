@@ -10,9 +10,9 @@ Class Permalink {
 	}
 
 
-	protected function __permalink(){		# make sure that utf-8 is set for
-		mb_internal_encoding('utf-8');		#     multibyte content string-fu
-
+	protected function __permalink(){
+		# make sure that utf-8 is set for multibyte content string-fu
+		mb_internal_encoding('utf-8');
 		$cachename = Pilot::$contentPot . '/' . Elf::cutFileExt(basename(Pilot::$path));
 		Pilot::getContentType($contentType, $cachename);
 
@@ -22,7 +22,6 @@ Class Permalink {
 
 			# cache exists, up-to-date, ready for output,
 			#    with up-to-date adjacent entries as needed
-
 			if (	Elf::cached(Pilot::$path, $cachename) === 1
 				&&	(	App::PREV_NEXT === 0
 					or	Elf::cached(App::$cacheRoot . '/' . App::ARR_CACHE_SUFFIX, $cachename) === 1)
@@ -30,13 +29,14 @@ Class Permalink {
 				include(App::$cacheRoot . '/' . $cachename);
 
 			else {
-				ob_start();					# start output buffering
+				# start output buffering
+				ob_start();
 				$this->__build(filemtime(Pilot::$path));
 				Elf::writeToFile(App::$cacheRoot . '/' . $cachename, ob_get_contents(), 'wb');
-				ob_end_flush();				# stop output buffering
+				# stop output buffering
+				ob_end_flush();
 
 				# remove sitemap cache file for proper last modified
-
 				if (file_exists(App::$cacheRoot . '/sitemap.xml') === true)
 					unlink(App::$cacheRoot . '/sitemap.xml');
 			}
@@ -71,11 +71,9 @@ Class Permalink {
 		){
 			$entry = file_get_contents(Pilot::$path);
 			$entry = trim(mb_convert_encoding($entry, 'utf-8', mb_detect_encoding($entry)));
-
 			$head = explode("\n", ($head = Elf::strShiftFirst($entry, "\n\n")));
 
 			# prevent from throwing PHP Notice in some rare case
-
 			if (sizeof($head) < 2)
 				$head = array_pad($head, 2, '');
 
@@ -94,8 +92,8 @@ Class Permalink {
 			unset($converter);
 
 			$this->__addAssets($entry);
-
-			$entry = array (				# title, description, content
+			# title, description, content
+			$entry = array(
 				$title,
 				$descr,
 				$entry
@@ -104,8 +102,8 @@ Class Permalink {
 		} else {
 			$entry = $this->__buildElement(Pilot::$path);
 			$this->__addAssets($entry);
-
-			$entry = array (				# title, description, content
+			# title, description, content
+			$entry = array(
 				Elf::getEntryTitle(Pilot::$path),
 				'',
 				$entry
@@ -146,7 +144,6 @@ Class Permalink {
 
 			# bit higher memory peak than sizeof-while-round-next-key
 			#    (grows with array size, negligible here)
-
 			foreach (array_keys($assets) as $path){
 				$n = strrpos($path, ' ') + 1;
 				$n = substr($path, $n, strrpos($path, '.') - $n);
@@ -160,7 +157,6 @@ Class Permalink {
 			}
 
 			unset($numbers, $path);
-
 			$this->__elseAssets($assets);
 		}
 	}

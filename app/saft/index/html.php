@@ -9,8 +9,9 @@ Class Html extends Index {
 		parent::__construct();
 	}
 
-											# $lastmod superfluous for indexes
+
 	protected function __build(&$entries, $lastmod){
+		# $lastmod superfluous for indexes
 		$alternate = '';
 
 		if (Pilot::$contentPot !== 0){
@@ -39,6 +40,7 @@ Class Html extends Index {
 <head>
 	<meta charset=utf-8>
 	<title>' , $title , '</title>' , $descr , '
+	<meta name=robots content=noarchive>
 	<link href=' , App::$absolute , 'favicon.ico rel=\'shortcut icon\'>
 	<link href=' , App::$absolute , 'apple-touch-icon.png rel=apple-touch-icon>' , $alternate , '
 	<link href=' , Elf::smartAssetURI('standard.css') , ' rel=stylesheet>
@@ -48,7 +50,6 @@ Class Html extends Index {
 
 		# bit lower memory peak than "foreach (array_keys() as $path){"
 		#    (gains with array size)
-
 		if (empty($entries) === false){
 			$size = sizeof($entries);
 			$r = 0;
@@ -77,12 +78,9 @@ Class Html extends Index {
 		echo '
 		<hr>
 	</section>';
-
 		unset($alternate, $descr, $entries, $title);
-
 		$nav = new Nav();
 		unset($nav);
-
 		echo '
 	<!--[if IE]><p id=blues><s>Internet Explorer</s><![endif]-->
 	<!--[if !IE]>-->

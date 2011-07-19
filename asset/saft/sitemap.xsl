@@ -55,6 +55,7 @@ a:link			{ color:#565858; font-weight:700; text-decoration:none; }
 a:visited		{ color:#767878; }
 a:focus,
 a:hover			{ color:#262828; }
+footer a:hover	{ text-decoration:underline; }
 a:active		{ color:#767878; }
 table			{ border-collapse:collapse; margin-bottom:25px; width:100%; }
 tbody tr		{ border-top:1px solid #d6d8d8; }
@@ -100,7 +101,7 @@ footer			{ color:#767878; font-family:Georgia,sans-serif; margin:16px 0 16px 25p
 		</tbody>
 	</table>
 	<footer> 
-		<small>© 2004-<xsl:value-of select="substring(sitemap:urlset/sitemap:url/sitemap:lastmod, 0, 5)"/>&#160;<xsl:value-of select="substring-before(substring-after(sitemap:urlset/sitemap:url/sitemap:loc, 'http://'), '/')"/>/. Content managed with <a href="http://doogvaard.net/speelplaats/2011/07/04/saft/">Saft</a>.</small> 
+		<small>© 2010-<xsl:value-of select="substring(sitemap:urlset/sitemap:url/sitemap:lastmod, 0, 5)"/>&#160;<xsl:value-of select="substring-before(substring-after(sitemap:urlset/sitemap:url/sitemap:loc, 'http://'), '/')"/>/. Content managed with <a href="http://doogvaard.net/speelplaats/2011/07/04/saft/">Saft</a>.</small> 
 	</footer>
 </body>
 </html>

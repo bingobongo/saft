@@ -9,13 +9,15 @@ Class Html extends Archive {
 		parent::__construct();
 	}
 
-											# $lastmod superfluous for archive
+
 	protected function __build(&$entries, $lastmod){
+		# $lastmod superfluous for archive
 		echo '<!doctype html>
 <html dir=ltr lang=' , App::LANG , ' id=' , Elf::getDomainID() , '>
 <head>
 	<meta charset=utf-8>
 	<title>' , htmlspecialchars(App::TITLE, ENT_QUOTES, 'utf-8', false) . ' ' . ucfirst(strtolower(App::ARCHIVE_STR)) , '</title>
+	<meta name=robots content=noarchive>
 	<link href=' , App::$absolute , 'favicon.ico rel=\'shortcut icon\'>
 	<link href=' , App::$absolute , 'apple-touch-icon.png rel=apple-touch-icon>
 	<link href=' , Elf::smartAssetURI('standard.css') , ' rel=stylesheet>
@@ -43,11 +45,10 @@ Class Html extends Archive {
 						Season
 			</thead>
 			<tbody>';
-
 			$size = sizeof($entries) + 1;
 			$r = 0;
-
-			while (--$size){				# uber, content pots
+			# uber, content pots
+			while (--$size){
 				++$r;
 
 				if ($r !== 1){
@@ -61,41 +62,40 @@ Class Html extends Archive {
 					$baseURI = '/' . App::$baseURI;
 					$name = '<a href=' . $baseURI . '>↩</a>';
 				}
-
-				$a = array_shift($arr);		# season alone (without year),
-				$q = 0;						#    remove from array
+				# season alone (without year), remove from array
+				$a = array_shift($arr);		
+				$q = 0;
 				echo '
 				<tr>
 					<td>
 						' , ucfirst($name) , '
 					<td>';
-
-				foreach ($a as $seasonArr){	# season alone (without year)
+				# season alone (without year)
+				foreach ($a as $seasonArr){
 					echo '
 					<td>';
 
 					if ($seasonArr !== 0)
 						echo '
 						<a href=' , $baseURI , $seasonStr[$q][0] , '>' , $seasonStr[$q][1] , '</a>';
-
-					else if ($r === 1)		# first of all (uber-season)
+					# first of all (uber-season)
+					else if ($r === 1)
 						echo '
 						' , $seasonStr[$q][1];
 
 					++$q;
 				}
-											# year
+				# year
 				foreach (array_keys($arr) as $year){
 					$a = $arr[$year];
 					$q = 0;
 					$year = trim($year);
-
 					echo '
 				<tr>
 					<td>
 					<td>
 						<a href=' , $baseURI , $year , '/>' , $year , '</a>';
-											# season
+					# season
 					foreach ($a as $seasonArr){
 						echo '
 					<td>';
@@ -119,14 +119,11 @@ Class Html extends Archive {
 			☺';
 
 		unset($entries, $lastmod, $seasonStr, $seasonArr, $arr, $a, $baseURI, $name, $year);
-
 		echo '
 		<hr>
 	</section>';
-
 		$nav = new Nav();
 		unset($nav);
-
 		echo '
 	<!--[if IE]><p id=blues><s>Internet Explorer</s><![endif]-->
 	<!--[if !IE]>-->

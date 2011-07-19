@@ -10,14 +10,14 @@ Class Html extends Permalink {
 	}
 
 
-	protected function __build($lastmod){	# $lastmod superfluous for permalink
+	protected function __build($lastmod){
+		# $lastmod superfluous for permalink
 		parent::__prepare($entry);
 
 		$title = array_shift($entry);
 		$descr = $entry[0] === ''
 			? array_shift($entry)
 			: "\n\t<meta content='" . array_shift($entry) . '\' name=description>';
-
 		$entry = implode($entry);
 
 		echo '<!doctype html>
@@ -25,6 +25,7 @@ Class Html extends Permalink {
 <head>
 	<meta charset=utf-8>
 	<title>' , $title , '</title>' , $descr , '
+	<meta name=robots content=noarchive>
 	<link href=' , App::$absolute , 'favicon.ico rel=\'shortcut icon\'>
 	<link href=' , App::$absolute , 'apple-touch-icon.png rel=apple-touch-icon>
 	<link href=' , Elf::smartAssetURI('standard.css') , ' rel=stylesheet>
@@ -36,10 +37,8 @@ Class Html extends Permalink {
 		</article>
 		<hr>
 	</section>';
-
 		$nav = new Nav();
 		unset($nav);
-
 		echo '
 	<footer>
 		<p id=footer>
@@ -49,7 +48,6 @@ Class Html extends Permalink {
 	<!--[if !IE]>-->
 	<script src=' , Elf::smartAssetURI('standard.js') , '></script>
 	<!--<![endif]-->';
-
 		unset($descr, $entry, $title);
 	}
 

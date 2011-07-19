@@ -29,8 +29,8 @@ Class JSON extends Archive {
 
 			$size = sizeof($entries) + 1;
 			$r = 0;
-
-			while (--$size){				# uber, content pots
+			# uber, content pots
+			while (--$size){
 				++$r;
 
 				if ($r !== 1){
@@ -43,12 +43,12 @@ Class JSON extends Archive {
 					$baseURL = App::$baseURL;
 					$name = '↩';
 				}
-
-				if ($arr === 0)				# abandone
+				# abandone
+				if ($arr === 0)
 					continue;
-
-				$a = array_shift($arr);		# season alone (without year),
-				$q = 0;						#    remove from array
+				# season alone (without year),  remove from array
+				$a = array_shift($arr);
+				$q = 0;
 				$sizeArr = sizeof($arr);
 				echo '
 		{
@@ -59,8 +59,8 @@ Class JSON extends Archive {
 					"name": "",
 					"url": "",
 					"season": [';
-
-				foreach ($a as $seasonArr){	# season alone (without year)
+				# season alone (without year)
+				foreach ($a as $seasonArr){
 					echo '
 						{
 							"name": "' , $seasonStr[$q][1] , '",
@@ -73,19 +73,18 @@ Class JSON extends Archive {
 				echo '
 					]
 				}' , $sizeArr > 0 ? ',' : '';
-											# year
+				# year
 				foreach (array_keys($arr) as $year){
 					$a = $arr[$year];
 					$q = 0;
 					$year = trim($year);
 					--$sizeArr;
-
 					echo '
 				{
 					"name": "' , $year , '",
 					"url": "' , $baseURL , $year , '/",
 					"season": [';
-											# season
+					# season
 					foreach ($a as $seasonArr){
 						echo '
 						{
@@ -111,7 +110,6 @@ Class JSON extends Archive {
 		"☺"';
 
 		echo "\n\t]\n}";
-
 		unset($entries, $lastmod, $seasonStr, $seasonArr, $arr, $a, $baseURI, $name, $year);
 	}
 

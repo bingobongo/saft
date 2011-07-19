@@ -29,7 +29,6 @@ Class Pot {
 				}
 
 				Elf::writeToFile(App::$cacheRoot . '/' . $arrCachename, json_encode(App::$pots), 'wb');
-
 				unset($arrCachename, $path, $permsCache);
 
 			} else
@@ -45,7 +44,6 @@ Class Pot {
 		App::$pots = array_filter(App::$pots, function($path){
 			return preg_match('{^[\w-]+$}i', basename($path)) === 1;
 		});
-
 		unset($path);
 	}
 
@@ -66,22 +64,20 @@ Class Pot {
 		$entries = array();
 		$changed =
 		$r = 0;
-
 		$pots =	self::$path === App::$potRoot
 			? App::$pots
 			: array(self::$path);
-
 		$size = sizeof($pots);
 
 		foreach ($pots as $path){
 			$arrCachename = basename($path) . '.' . App::ARR_CACHE_SUFFIX;
 
-			if (App::$author === 0){		# no Maat author => yes, scheduled
+			# no Maat author => yes, scheduled entries
+			if (App::$author === 0){
 				$note = App::$cacheRoot . '/' . basename($path) . '.note.txt';
 
 				if (is_readable($note) === false)
 					$note = 0;
-
 			} else
 				$note = 0;
 
@@ -91,17 +87,19 @@ Class Pot {
 					&&	intval(file_get_contents($note)) <= App::$today
 					)
 			){
-				if ($note !== 0)			# reset memory of scheduled entries
-					unlink($note);
-
 				$parts = self::getEntries($path);
 				Elf::writeToFile(App::$cacheRoot . '/' . $arrCachename, json_encode($parts), 'wb');
-
+				# mark as cached
 				$path = fopen($path . '/0_REMOVE-TO-FORCE-CACHE-UPDATE.txt', 'wb');
-				fclose($path);				# mark as cached
+				fclose($path);
 
-				if (empty($parts) === false)# += is possible as long as array
-					$entries+= $parts;		#    key = path of entry => unique
+				# reset memory of scheduled entries
+				if ($note !== 0)
+					unlink($note);
+
+				# += is possible as long as array key = path of entry (= unique)
+				if (empty($parts) === false)
+					$entries+= $parts;
 
 				unset($pots[$r]);
 				$changed = 1;
@@ -115,9 +113,7 @@ Class Pot {
 		if ($changed === 0){
 
 			if (self::$path === App::$potRoot){
-
 				# check for root cache file and for removed content pots
-
 				if (Elf::cached(App::$potRoot, App::ARR_CACHE_SUFFIX) === 1){
 					unset($arrCachename, $note, $path, $pots);
 					return self::__cacheDecoded(App::ARR_CACHE_SUFFIX);
@@ -125,7 +121,6 @@ Class Pot {
 
 			# assumes that base and content pot URI are valid
 			#    (no further subdirectories nor combined or permalink URI)
-
 			} else {
 				unset($note, $path, $pots);
 				return self::__cacheDecoded($arrCachename);
@@ -146,7 +141,6 @@ Class Pot {
 			Elf::writeToFile(App::$cacheRoot . '/' . App::ARR_CACHE_SUFFIX, json_encode($entries), 'wb');
 
 		unset($arrCachename, $note, $parts, $path, $pots, $size);
-
 		return $entries;
 	}
 
@@ -182,7 +176,6 @@ Class Pot {
 
 		else if (Elf::endsWith($potRoot, '/pot'))
 			$pots = App::$pots;
-
 		else
 			$pots = array($potRoot);
 
@@ -217,7 +210,6 @@ Class Pot {
 							&&	preg_match('{^[\w-]+$}i', $item) === 1
 						)
 							$subpots[] = $itemPath;
-
 						else
 							continue;
 
@@ -225,10 +217,7 @@ Class Pot {
 
 						if (intval($item) <= $today)
 							$entries[$itemPath] = basename($itemPath);
-
-						# no Maat author => yes, scheduled
-
-						else if (App::$author === 0)
+						else
 							$note[preg_replace('{^/([\w-]+).*$}i', '$1', str_replace(App::$potRoot, '', $itemPath))] = basename($itemPath);
 
 					} else
@@ -239,24 +228,22 @@ Class Pot {
 				}
 			}
 
-			$pots = $subpots;				# update pots array
-			$subpots = array();				# empty subpots array
-			++$level;
-
 			clearstatcache();
+			# update pots array
+			$pots = $subpots;
+			# empty subpots array
+			$subpots = array();
+			++$level;
 		}
 
 		# write memory of scheduled entries
-
 		if (	App::CACHE === 1
 			&&	empty($note) === false
 		)
 			self::__remember($note);
 
-		natcasesort($entries);
-
 		unset($note, $potRoot, $pots, $subpots, $today);
-
+		natcasesort($entries);
 		return array_reverse($entries);
 	}
 
@@ -265,7 +252,8 @@ Class Pot {
 
 	protected function __remember(&$note){
 		natcasesort($note);
-		$name = key($note);					# yyyymmdd
+		$name = key($note);
+		# yyyymmdd = 8
 		$date = substr(array_shift($note), 0, 8);
 		Elf::writeToFile(App::$cacheRoot . '/' . $name . '.note.txt', $date, 'wb');
 		unset($date, $name);

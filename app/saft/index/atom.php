@@ -38,7 +38,6 @@ Class Atom extends Index {
 
 		# bit lower memory peak than "foreach (array_keys() as $path){"
 		#    (gains with array size)
-
 		if (empty($entries) === false){
 			$size = sizeof($entries) + 1;
 			$r = 0;
@@ -65,7 +64,6 @@ Class Atom extends Index {
 
 		echo '
 </feed>';
-
 		unset($descr, $entries, $selfURL, $title);
 	}
 
