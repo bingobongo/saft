@@ -44,10 +44,8 @@ Class Fruit extends \Exception {
 	<pre id=trace>' . $this->getTraceAsString() . "\n   thrown in <b>" . $this->getFile() . '</b> on line <b>' . $this->getLine() . "</b>\n   <small>" . substr(Elf::getSqueezedStr(), 5, -4) . '</small></pre>';
 
 		else if ($code === 500){
-			$pre = '<br>
-		<pre id=info>Get detailed information about what is exactly wrong by <b>adding your
-IP address to the list of allowed remote addresses</b> inside <i>app.php</i>.
-<small>You may use <a href=http://doogvaard.net/speelplaats/2011/07/19/ip/>IP</a> to cut and paste your current IP address.</small></pre>';
+			$pre = "<br>
+	<pre id=info>Get detailed information about what is exactly\nwrong by adding your IP address <b>" . $_SERVER['REMOTE_ADDR'] . "</b> to\nthe list of allowed remote addresses inside <i>app.php</i>.</pre>";
 
 			if (strpos($msg, 'Aut') === 0)
 				$msg = 'Automatically shut down due to a security precaution.' . $pre;
