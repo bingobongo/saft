@@ -63,11 +63,11 @@ table			{ border-collapse:collapse; margin-bottom:25px; width:100%; }
 tbody tr		{ border-top:1px solid #d6d8d8; }
 tbody tr:hover	{ background-color:#e6e8e8; }
 td,
-th				{ line-height:1.5; padding:5px 5px; }
-td				{ font-size:16px; }
-th				{ font-size:14px; text-align:left; }
-.first			{ padding-left:25px; }
-.last			{ padding-right:25px; }
+th				{ color:#767878; font-size:14px; line-height:1.5; padding:5px 5px; text-align:right; }
+td:first-child	{ font-size:16px; padding-left:25px; text-align:left; }
+th:first-child	{ padding-left:25px; text-align:left; }
+td:last-child,
+th:last-child	{ padding-right:25px; }
 footer			{ color:#767878; font-family:Georgia,sans-serif; margin:16px 0 16px 25px; }
 	</style>
 </head>
@@ -79,10 +79,10 @@ footer			{ color:#767878; font-family:Georgia,sans-serif; margin:16px 0 16px 25p
 	<table>
 		<thead>
 			<tr>
-				<th class="first">URL</th>
+				<th>URL</th>
 				<th>Priority</th>
 				<th>Change Frequency</th>
-				<th class="last">Last Change (GMT)</th>
+				<th>Last Change (GMT)</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -90,13 +90,13 @@ footer			{ color:#767878; font-family:Georgia,sans-serif; margin:16px 0 16px 25p
 			<xsl:variable name="uc" select="'ABCDEFGHIJKLMNOPQRSTUVWXYZ'"/>
 			<xsl:for-each select="sitemap:urlset/sitemap:url">
 				<tr>
-					<td class="first">
+					<td>
 						<xsl:variable name="itemURL" select="sitemap:loc"/>
 						<a href="{$itemURL}"><xsl:value-of select="$itemURL"/></a>
 					</td>
 					<td><xsl:value-of select="concat(sitemap:priority*100, '&#160;%')"/></td>
 					<td><xsl:value-of select="concat(translate(substring(sitemap:changefreq, 1, 1), concat($lc, $uc), concat($uc, $lc)), substring(sitemap:changefreq, 2))"/></td>
-					<td class="last"><xsl:value-of select="concat(substring(sitemap:lastmod, 0, 11), concat('&#160;', substring(sitemap:lastmod, 12, 5)))"/></td>
+					<td><xsl:value-of select="concat(substring(sitemap:lastmod, 0, 11), concat('&#160;', substring(sitemap:lastmod, 12, 5)))"/></td>
 				</tr>
 			</xsl:for-each>
 		</tbody>
